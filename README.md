@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project is a comprehensive Hebrew flashcard learning application designed to help users study and master Hebrew vocabulary. It features user authentication, pre-loaded vocabulary sections, custom section creation via Excel uploads, and a smart learning algorithm to optimize study sessions. Built with Next.js 14+ using the App Router, Tailwind CSS, and SQLite3 database.
+This project is a comprehensive Hebrew flashcard learning application designed to help users study and master Hebrew vocabulary. It features user authentication, pre-loaded vocabulary sections, custom section creation via Excel uploads, and a smart learning algorithm to optimize study sessions. Built with Next.js 14+ using the App Router, Tailwind CSS, and PostgreSQL database.
 
 ## Features
 
@@ -25,7 +25,7 @@ This project is a comprehensive Hebrew flashcard learning application designed t
     - **Indicators**: Visual progress bars, color-coding for word difficulty (new, learning, mastered), and study session history.
 
 ### Completed Features
-- **Project Setup & Database**: SQLite database setup, schema definition, and pre-loading script for default vocabulary.
+- **Project Setup & Database**: PostgreSQL database setup, schema definition, and pre-loading script for default vocabulary.
 - **User Authentication**: User registration, login, secure session management with NextAuth.js, and user profile management.
 - **Core Learning Features**: Section selection, session setup, main flashcard study interface, and smart learning algorithm.
 - **Content Management**: Excel upload feature for custom sections (frontend and backend API route created, `xlsx` library installed). File validation and error handling for uploads.
@@ -42,7 +42,7 @@ This project is a comprehensive Hebrew flashcard learning application designed t
 ## Technology Stack
 
 - **Framework**: Next.js 14+ (with App Router)
-- **Database**: SQLite3
+- **Database**: PostgreSQL
 - **ORM**: Prisma
 - **Authentication**: NextAuth.js
 - **Styling**: Tailwind CSS
@@ -95,14 +95,14 @@ To get this project up and running on your local machine, follow these steps:
     pnpm install
     ```
 3.  **Set up the database:**
-    The project uses SQLite3 with Prisma.
+    The project uses PostgreSQL with Prisma.
     ```bash
-    pnpm prisma migrate dev --name init
+    pnpm prisma migrate deploy
     pnpm prisma db seed
     ```
-    This will create the `dev.db` file and pre-load default vocabulary.
+    This will set up the database schema and pre-load default vocabulary.
 4.  **Configure environment variables:**
-    Create a `.env` file in the root directory and add necessary environment variables (e.g., `NEXTAUTH_SECRET`, `DATABASE_URL`).
+    Create a `.env` file in the root directory. You will need to set the `DATABASE_URL` environment variable to your PostgreSQL connection string (e.g., `postgresql://user:password@host:port/database?schema=public`). Also, add other necessary environment variables (e.g., `NEXTAUTH_SECRET`).
 5.  **Run the development server:**
     ```bash
     pnpm dev
