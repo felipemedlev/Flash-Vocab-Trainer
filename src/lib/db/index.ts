@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client'
 import { withAccelerate } from '@prisma/extension-accelerate'
 import { config } from 'dotenv';
+import { PrismaClient } from '@prisma/client'
 
 config(); // Load environment variables from .env file
 

@@ -8,7 +8,7 @@ export default function Home() {
     <Container size="md">
       <div style={{ textAlign: 'center', paddingTop: '100px', paddingBottom: '100px' }}>
         <Title order={1} style={{ marginBottom: '20px' }}>
-          Welcome to Ulpan Flashcards
+          Welcome to Ulpan Flashcards 
         </Title>
         <Text size="lg" style={{ marginBottom: '40px' }}>
           The best way to learn Hebrew vocabulary.
