@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 
 export async function GET(
-  request: Request,
-  { params }: { params: { sectionId: string } }
+  request: NextRequest,
+  context: { params: Promise<{ sectionId: string }> }
 ) {
-  const { sectionId } = params;
+  const { sectionId } = await context.params;
 
   if (!sectionId) {
     return NextResponse.json(

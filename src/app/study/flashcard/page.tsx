@@ -20,7 +20,6 @@ export default function FlashcardPage() {
   const sectionId = searchParams.get("sectionId");
   const sessionLength = searchParams.get("length");
   const focusMode = searchParams.get("focus");
-  const studyMode = searchParams.get("mode") || "flashcard"; // Default to flashcard
   const { status } = useSession();
 
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -30,8 +29,6 @@ export default function FlashcardPage() {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [, setShowAnswer] = useState(false);
-  const [typedAnswer, setTypedAnswer] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -101,7 +98,6 @@ export default function FlashcardPage() {
         setTimeout(() => {
           setShowFeedback(false);
           setSelectedOption(null);
-          setShowAnswer(false);
           if (currentCardIndex < flashcards.length - 1) {
             setCurrentCardIndex(currentCardIndex + 1);
           } else {
@@ -116,15 +112,6 @@ export default function FlashcardPage() {
     updateProgress();
   };
 
-  // const handleRevealAnswer = () => {
-  //   setShowAnswer(true);
-  // };
-
-  // const handleTypingSubmit = (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   if (showFeedback) return;
-  //   handleOptionClick(typedAnswer);
-  // };
 
   const currentCard = flashcards[currentCardIndex];
   const progress = flashcards.length > 0 ? ((currentCardIndex + 1) / flashcards.length) * 100 : 0;
