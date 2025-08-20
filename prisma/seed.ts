@@ -255,35 +255,41 @@ async function main() {
   console.log('Starting database seeding...');
 
   for (const section of defaultSections) {
-    const existingSection = await db.section.findUnique({
-      where: { name: section.name },
-    });
+    try {
+      const existingSection = await db.section.findUnique({
+        where: { name: section.name },
+      });
 
-    if (existingSection) {
-      console.log(`Section '${section.name}' already exists. Skipping.`);
-      continue;
-    }
+      if (existingSection) {
+        console.log(`Section '${section.name}' already exists. Skipping.`);
+        continue;
+      }
 
-    const createdSection = await db.section.create({
-      data: {
-        name: section.name,
-        description: section.description,
-        isDefault: section.isDefault,
-        words: {
-          create: section.words.map((w) => ({
-            hebrewText: w.hebrew,
-            englishTranslation: w.english,
-          })),
+      const createdSection = await db.section.create({
+        data: {
+          name: section.name,
+          description: section.description,
+          isDefault: section.isDefault,
+          words: {
+            create: section.words.map((w) => ({
+              hebrewText: w.hebrew,
+              englishTranslation: w.english,
+            })),
+          },
         },
-      },
-      include: {
-        words: true,
-      },
-    });
-    console.log(`Created section '${createdSection.name}' with ${createdSection.words.length} words.`);
+        include: {
+          words: true,
+        },
+      });
+      console.log(`Created section '${createdSection.name}' with ${createdSection.words.length} words.`);
+    } catch (error) {
+      console.error(`Error creating section '${section.name}':`, error);
+    }
   }
 
-  console.log('Seeding complete.');
+  const totalSections = await db.section.count();
+  const totalWords = await db.word.count();
+  console.log(`Seeding complete. Total sections: ${totalSections}, Total words: ${totalWords}.`);
 }
 
 main()

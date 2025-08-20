@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import GoBack from "@/components/GoBack";
 
 interface Section {
   id: number;
@@ -43,7 +44,10 @@ export default function SectionsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Select a Section</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Select a Section</h1>
+        <GoBack />
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {sections.map((section) => (
           <Link href={`/study/${section.id}`} key={section.id}>

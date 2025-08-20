@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { Container, Title, Grid, Paper, Text, Loader } from '@mantine/core';
 
-const ProgressChart = dynamic(
-  () => import("./components/ProgressChart"),
-  { ssr: false }
-);
+const ProgressChart = dynamic(() => import('./components/ProgressChart'), {
+  ssr: false,
+});
 
 interface DashboardData {
   wordsLearned: number;
@@ -23,18 +23,18 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
+    if (status === 'unauthenticated') {
+      router.push('/auth/login');
     }
   }, [status, router]);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (status === "authenticated") {
+      if (status === 'authenticated') {
         try {
-          const response = await fetch("/api/dashboard");
+          const response = await fetch('/api/dashboard');
           if (!response.ok) {
-            throw new Error("Failed to fetch dashboard data");
+            throw new Error('Failed to fetch dashboard data');
           }
           const data = await response.json();
           setDashboardData(data);
@@ -49,34 +49,50 @@ export default function DashboardPage() {
     fetchData();
   }, [status]);
 
-  if (status === "loading" || loading) {
-    return <div className="flex items-center justify-center h-full">Loading...</div>;
+  if (status === 'loading' || loading) {
+    return (
+      <Container style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+        <Loader />
+      </Container>
+    );
   }
 
-  if (status === "authenticated" && dashboardData) {
+  if (status === 'authenticated' && dashboardData) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
+      <Container>
+        <Title order={2} style={{ marginBottom: '20px' }}>
+          Dashboard
+        </Title>
+        <Grid>
+          <Grid.Col span={{ base: 12, md: 4 }}>
+            <Paper withBorder p="md" radius="md">
+              <Text size="xl" fw={500}>
+                Words Learned
+              </Text>
+              <Text size="xl">{dashboardData.wordsLearned}</Text>
+            </Paper>
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 4 }}>
+            <Paper withBorder p="md" radius="md">
+              <Text size="xl" fw={500}>
+                Sections Completed
+              </Text>
+              <Text size="xl">{dashboardData.sectionsCompleted}</Text>
+            </Paper>
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 4 }}>
+            <Paper withBorder p="md" radius="md">
+              <Text size="xl" fw={500}>
+                Study Streak
+              </Text>
+              <Text size="xl">{dashboardData.studyStreak} days</Text>
+            </Paper>
+          </Grid.Col>
+        </Grid>
+        <div style={{ marginTop: '40px' }}>
+          <ProgressChart />
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          <div className="p-4 border rounded-lg shadow-sm bg-white">
-            <h3 className="text-lg font-semibold">Words Learned</h3>
-            <p className="text-3xl font-bold">{dashboardData.wordsLearned}</p>
-          </div>
-          <div className="p-4 border rounded-lg shadow-sm bg-white">
-            <h3 className="text-lg font-semibold">Sections Completed</h3>
-            <p className="text-3xl font-bold">{dashboardData.sectionsCompleted}</p>
-          </div>
-          <div className="p-4 border rounded-lg shadow-sm bg-white">
-            <h3 className="text-lg font-semibold">Study Streak</h3>
-            <p className="text-3xl font-bold">{dashboardData.studyStreak} days</p>
-          </div>
-        </div>
-
-        <ProgressChart />
-      </div>
+      </Container>
     );
   }
 

@@ -3,12 +3,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { FlashCard } from "@/components/FlashCard";
+import { LinearProgress } from "@/components/LinearProgress";
 
 interface Flashcard {
   wordId: number;
   hebrewText: string;
   correctTranslation: string;
   options: string[];
+  level: 'new' | 'learning' | 'review' | 'mastered';
 }
 
 export default function FlashcardPage() {
@@ -152,107 +155,56 @@ export default function FlashcardPage() {
 
   if (status === "authenticated") {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-4">
-        <div className="w-full max-w-2xl bg-white rounded-lg shadow-md p-6 sm:p-8">
-          <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
-            <div
-              className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-
-          <div className="text-center mb-8">
-            <p className="text-sm text-gray-500 mb-2">
-              Word {currentCardIndex + 1} of {flashcards.length}
-            </p>
-            <h2
-              className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6 rtl-text"
-              dir="rtl"
-            >
-              {currentCard.hebrewText}
-            </h2>
-            {showAnswer && (
-              <p className="text-lg sm:text-xl text-green-600 font-semibold mt-4">
-                Correct Answer: {currentCard.correctTranslation}
-              </p>
-            )}
-          </div>
-
-          {studyMode === "typing" ? (
-            <form onSubmit={handleTypingSubmit} className="mb-6">
-              <input
-                type="text"
-                value={typedAnswer}
-                onChange={(e) => setTypedAnswer(e.target.value)}
-                disabled={showFeedback}
-                className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-lg"
-                placeholder="Type the English translation..."
-              />
-              <button
-                type="submit"
-                disabled={showFeedback || !typedAnswer}
-                className="w-full mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              >
-                Submit
-              </button>
-            </form>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-              {currentCard.options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleOptionClick(option)}
-                  disabled={showFeedback}
-                  className={`
-                    p-4 rounded-lg border-2 text-lg font-medium
-                    ${
-                      showFeedback && selectedOption === option
-                        ? isCorrect
-                          ? "bg-green-200 border-green-500"
-                          : "bg-red-200 border-red-500"
-                        : "bg-gray-50 hover:bg-gray-100 border-gray-200"
-                    }
-                    ${
-                      showFeedback &&
-                      option === currentCard.correctTranslation &&
-                      selectedOption !== option
-                        ? "bg-green-100 border-green-400"
-                        : ""
-                    }
-                    transition-colors duration-200
-                  `}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="text-center">
-            <button
-              onClick={handleRevealAnswer}
-              disabled={showFeedback || showAnswer}
-              className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-            >
-              Reveal Answer
-            </button>
-          </div>
-
-          {showFeedback && (
-            <div
-              className={`mt-6 text-center text-xl font-bold ${
-                isCorrect ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {isCorrect ? "Correct!" : "Incorrect!"}
-              {!isCorrect && (
-                <p className="text-base text-gray-700 mt-2">
-                  The correct answer was: {currentCard.correctTranslation}
-                </p>
-              )}
-            </div>
-          )}
+      <div className="max-w-2xl mx-auto p-6">
+        <div className="mt-8">
+          <LinearProgress value={progress} />
         </div>
+        <div className="text-center mb-8">
+          <p className="text-sm text-text-secondary mb-2">
+            Study Session
+          </p>
+          <p className="text-lg font-medium">
+            Card {currentCardIndex + 1} of {flashcards.length}
+          </p>
+        </div>
+
+        <div className="mb-8">
+          <FlashCard
+            hebrew={currentCard.hebrewText}
+            level={currentCard.level}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            {currentCard.options.map((option, index) => (
+              <button
+                key={index}
+                onClick={() => handleOptionClick(option)}
+                disabled={showFeedback}
+                className={`
+                  p-4 rounded-lg border-2 text-lg font-medium
+                  ${
+                    showFeedback && selectedOption === option
+                      ? isCorrect
+                        ? "bg-green-200 border-green-500"
+                        : "bg-red-200 border-red-500"
+                      : "bg-gray-50 hover:bg-gray-100 border-gray-200"
+                  }
+                  ${
+                    showFeedback &&
+                    option === currentCard.correctTranslation &&
+                    selectedOption !== option
+                      ? "bg-green-100 border-green-400"
+                      : ""
+                  }
+                  transition-colors duration-200
+                `}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+
       </div>
     );
   }
