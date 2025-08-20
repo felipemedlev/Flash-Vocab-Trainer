@@ -1,26 +1,12 @@
 'use client';
 
-import { Card, Text, Divider } from '@mantine/core';
+import { Card, Text } from '@mantine/core';
 
 interface FlashCardProps {
   hebrew: string;
   level: 'new' | 'learning' | 'review' | 'mastered';
 }
 
-const getProgressColor = (level: FlashCardProps['level']) => {
-  switch (level) {
-    case 'new':
-      return 'bg-blue-500';
-    case 'learning':
-      return 'bg-amber-500';
-    case 'review':
-      return 'bg-gray-500';
-    case 'mastered':
-      return 'bg-green-500';
-    default:
-      return 'bg-gray-500';
-  }
-};
 
 export function FlashCard({ hebrew, level }: FlashCardProps) {
   const cardStates = {

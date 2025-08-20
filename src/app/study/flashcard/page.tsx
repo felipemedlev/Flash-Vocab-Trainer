@@ -21,7 +21,7 @@ export default function FlashcardPage() {
   const sessionLength = searchParams.get("length");
   const focusMode = searchParams.get("focus");
   const studyMode = searchParams.get("mode") || "flashcard"; // Default to flashcard
-  const { data: _session, status } = useSession();
+  const { status } = useSession();
 
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -30,7 +30,7 @@ export default function FlashcardPage() {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [, setShowAnswer] = useState(false);
   const [typedAnswer, setTypedAnswer] = useState("");
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function FlashcardPage() {
         setLoading(false);
       }
     }
-  }, [sectionId, sessionLength, studyMode, status, focusMode]);
+  }, [sectionId, sessionLength, status, focusMode]);
 
   useEffect(() => {
     fetchFlashcards();
@@ -116,15 +116,15 @@ export default function FlashcardPage() {
     updateProgress();
   };
 
-  const handleRevealAnswer = () => {
-    setShowAnswer(true);
-  };
+  // const handleRevealAnswer = () => {
+  //   setShowAnswer(true);
+  // };
 
-  const handleTypingSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (showFeedback) return;
-    handleOptionClick(typedAnswer);
-  };
+  // const handleTypingSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (showFeedback) return;
+  //   handleOptionClick(typedAnswer);
+  // };
 
   const currentCard = flashcards[currentCardIndex];
   const progress = flashcards.length > 0 ? ((currentCardIndex + 1) / flashcards.length) * 100 : 0;

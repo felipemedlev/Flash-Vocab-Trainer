@@ -22,7 +22,7 @@ interface Section {
   isDefault: boolean;
   createdByUserId: number | null;
   createdAt: string;
-  words: any[];
+  words: unknown[];
   totalWords: number;
 }
 
@@ -30,7 +30,7 @@ export default function StudySetupPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sectionId = searchParams.get('sectionId');
-  const { data: _session, status } = useSession();
+  const { status } = useSession();
 
   const [sectionName, setSectionName] = useState('Loading Section...');
   const [totalWordsInSections, setTotalWordsInSections] = useState(0);

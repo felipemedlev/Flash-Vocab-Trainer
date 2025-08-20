@@ -17,7 +17,7 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
-  const { data: _session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
