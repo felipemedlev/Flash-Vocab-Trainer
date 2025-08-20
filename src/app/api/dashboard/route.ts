@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import db from "@/lib/db";
+import { Section, Word } from '@prisma/client';
 
 export async function GET() {
   const session = await auth();
@@ -28,7 +29,7 @@ export async function GET() {
       },
     });
 
-    const sectionsCompletedPromises = sections.map(async (section) => {
+    const sectionsCompletedPromises = sections.map(async (section: Section & { words: Word[] }) => {
       if (section.words.length === 0) {
         return false;
       }

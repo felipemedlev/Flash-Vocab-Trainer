@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/db';
+import { Section, Word, UserProgress } from '@prisma/client';
 
 export async function GET() {
   const session = await auth();
@@ -30,7 +31,7 @@ export async function GET() {
       }
     });
 
-    const sectionsWithProgress = sections.map(section => {
+    const sectionsWithProgress = sections.map((section: Section & { words: (Word & { progress: UserProgress[] })[] }) => {
       const totalWords = section.words.length;
       const learnedWords = new Set(
         section.words.flatMap(word =>
