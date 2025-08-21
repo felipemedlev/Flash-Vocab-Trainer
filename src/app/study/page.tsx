@@ -12,11 +12,30 @@ function StudyPageContent() {
   const searchParams = useSearchParams();
   const sectionId = searchParams.get('sectionId');
 
+  // All useEffect hooks must be called unconditionally at the top
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/login');
     }
   }, [status, router]);
+
+  useEffect(() => {
+    if (sectionId && status === 'authenticated') {
+      router.replace(`/study/${sectionId}`);
+    }
+  }, [sectionId, status, router]);
+
+  if (status === 'loading') {
+    return (
+      <Container style={{ textAlign: 'center', marginTop: '20vh' }}>
+        <Text>Loading study setup...</Text>
+      </Container>
+    );
+  }
+
+  if (status === 'unauthenticated') {
+    return null; // Will redirect in useEffect
+  }
 
   // If no sectionId is provided, show section selector
   if (!sectionId && status === 'authenticated') {
@@ -39,25 +58,6 @@ function StudyPageContent() {
         </Paper>
       </Container>
     );
-  }
-
-  // Handle redirect when sectionId is provided
-  useEffect(() => {
-    if (sectionId && status === 'authenticated') {
-      router.replace(`/study/${sectionId}`);
-    }
-  }, [sectionId, status, router]);
-
-  if (status === 'loading') {
-    return (
-      <Container style={{ textAlign: 'center', marginTop: '20vh' }}>
-        <Text>Loading study setup...</Text>
-      </Container>
-    );
-  }
-
-  if (status === 'unauthenticated') {
-    return null; // Will redirect in useEffect
   }
 
   // Show loading while redirecting
