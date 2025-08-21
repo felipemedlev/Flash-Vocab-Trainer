@@ -21,6 +21,23 @@ import {
   Anchor
 } from '@mantine/core';
 import Link from 'next/link';
+interface SectionProgress {
+  id: number;
+  name: string;
+  description: string;
+  isDefault: boolean;
+  totalWords: number;
+  learnedWords: number;
+}
+
+interface SectionProgress {
+  id: number;
+  name: string;
+  description: string;
+  isDefault: boolean;
+  totalWords: number;
+  learnedWords: number;
+}
 
 const ProgressChart = dynamic(() => import('./components/ProgressChart'), {
   ssr: false,
@@ -71,7 +88,7 @@ export default function DashboardPage() {
           
           if (sectionsResponse.ok) {
             const sectionsData = await sectionsResponse.json();
-            const sectionsWithProgress = sectionsData.map((section: any) => ({
+            const sectionsWithProgress = sectionsData.map((section: SectionProgress) => ({
               ...section,
               progress: section.totalWords > 0 ? (section.learnedWords / section.totalWords) * 100 : 0
             })).slice(0, 3); // Show top 3 recent sections

@@ -9,7 +9,7 @@ import { useSession, signOut } from 'next-auth/react';
 export function AppShellWrapper({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
   const pathname = usePathname();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   // Hide AppShell on specific routes if needed
   if (pathname === '/auth/login' || pathname === '/auth/register') {
