@@ -6,7 +6,6 @@ import {
   TextInput, 
   Group, 
   Box, 
-  Text, 
   Alert,
   ActionIcon,
   Stack,
@@ -140,7 +139,7 @@ export default function WordInput({ sectionId, onWordsSaved }: WordInputProps) {
       } else {
         setError(result.message || 'Failed to save words');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to save words. Please try again.');
     } finally {
       setSaving(false);

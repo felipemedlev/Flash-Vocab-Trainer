@@ -179,27 +179,7 @@ export default function FlashcardContent() {
     };
   }, [progressQueue]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (showFeedback || !currentCard) return; // Don't allow shortcuts during feedback
-
-      const keyMap: { [key: string]: number } = {
-        '1': 0, '2': 1, '3': 2, '4': 3,
-        'q': 0, 'w': 1, 'e': 2, 'r': 3
-      };
-
-      const optionIndex = keyMap[e.key.toLowerCase()];
-      if (optionIndex !== undefined && optionIndex < currentCard.options.length) {
-        handleOptionClick(currentCard.options[optionIndex]);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentCard, showFeedback]);
-
-  const handleOptionClick = (option: string) => {
+  const handleOptionClick = useCallback((option: string) => {
     if (showFeedback) return; // Prevent multiple selections
     setSelectedOption(option);
     const correct = option === flashcards[currentCardIndex].correctTranslation;
@@ -258,7 +238,27 @@ export default function FlashcardContent() {
         router.push(`/study/completion?${params.toString()}`);
       }
     }, 1000); // Reduced to 1 second delay for faster card transitions
-  };
+  }, [showFeedback, flashcards, currentCardIndex, cardStartTime, sessionWordAttempts, sessionStats, sectionId, router]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (showFeedback || !currentCard) return; // Don't allow shortcuts during feedback
+
+      const keyMap: { [key: string]: number } = {
+        '1': 0, '2': 1, '3': 2, '4': 3,
+        'q': 0, 'w': 1, 'e': 2, 'r': 3
+      };
+
+      const optionIndex = keyMap[e.key.toLowerCase()];
+      if (optionIndex !== undefined && optionIndex < currentCard.options.length) {
+        handleOptionClick(currentCard.options[optionIndex]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentCard, showFeedback, handleOptionClick]);
 
 
   const progress = flashcards.length > 0 ? ((currentCardIndex + 1) / flashcards.length) * 100 : 0;

@@ -33,11 +33,12 @@ export async function GET(request: Request) {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           return await operation();
-        } catch (error: any) {
-          console.log(`Database operation attempt ${attempt} failed:`, error.message);
+        } catch (error: unknown) {
+          const dbError = error as { code?: string; message?: string };
+          console.log(`Database operation attempt ${attempt} failed:`, dbError.message);
           
           // Check if it's a connection error that we can retry
-          if (error.code === 'P1017' || error.code === 'P1001' || error.code === 'P1008') {
+          if (dbError.code === 'P1017' || dbError.code === 'P1001' || dbError.code === 'P1008') {
             if (attempt < maxRetries) {
               // Wait before retrying (exponential backoff)
               const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);

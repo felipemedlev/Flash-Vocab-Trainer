@@ -5,7 +5,6 @@ config(); // Load environment variables from .env file
 
 // Global variable to prevent multiple Prisma instances in development
 declare global {
-  // eslint-disable-next-line no-var
   var __prisma: PrismaClient | undefined;
 }
 

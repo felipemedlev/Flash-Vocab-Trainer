@@ -23,6 +23,14 @@ interface Word {
   englishTranslation: string;
 }
 
+interface ApiWordResponse {
+  wordId?: number;
+  id?: number;
+  hebrewText: string;
+  correctTranslation?: string;
+  englishTranslation?: string;
+}
+
 interface WordManagementProps {
   sectionId: string;
   onWordsChange?: () => void;
@@ -53,10 +61,10 @@ export default function WordManagement({ sectionId, onWordsChange }: WordManagem
       }
       
       const data = await response.json();
-      const allWords = data.map((item: any) => ({
-        id: item.wordId || item.id,
+      const allWords = data.map((item: ApiWordResponse) => ({
+        id: item.wordId || item.id || 0,
         hebrewText: item.hebrewText,
-        englishTranslation: item.correctTranslation || item.englishTranslation
+        englishTranslation: item.correctTranslation || item.englishTranslation || ''
       }));
 
       setTotalWords(allWords.length);
@@ -77,7 +85,7 @@ export default function WordManagement({ sectionId, onWordsChange }: WordManagem
 
   useEffect(() => {
     fetchWords(currentPage);
-  }, [sectionId, currentPage]);
+  }, [sectionId, currentPage, fetchWords]);
 
   const handleEdit = (word: Word) => {
     setEditingId(word.id);

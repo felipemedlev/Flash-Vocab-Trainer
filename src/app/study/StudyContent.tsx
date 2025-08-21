@@ -49,7 +49,7 @@ export default function StudyContent() {
     if (status === 'unauthenticated') {
       router.push('/auth/login');
     }
-  }, [status]);
+  }, [status, router]);
 
   useEffect(() => {
     const fetchSectionDetails = async () => {
@@ -76,7 +76,7 @@ export default function StudyContent() {
     if (status !== 'loading') {
       fetchSectionDetails();
     }
-  }, [sectionId, status]);
+  }, [sectionId, status, router]);
 
   if (status === 'loading' || loading) {
     return (

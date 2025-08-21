@@ -49,7 +49,7 @@ export default function LoginPage() {
       } else {
         router.push("/dashboard");
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);

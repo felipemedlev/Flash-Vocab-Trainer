@@ -17,8 +17,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    const userId = session.user.id;
-
     let userProgress: UserProgress | null = null;
     
     try {
@@ -28,8 +26,9 @@ export async function POST(request: Request) {
           wordId: wordId,
         },
       });
-    } catch (error: any) {
-      if (error.code === 'P1017' || error.code === 'P1001' || error.code === 'P1008') {
+    } catch (error: unknown) {
+      const dbError = error as { code?: string };
+      if (dbError.code === 'P1017' || dbError.code === 'P1001' || dbError.code === 'P1008') {
         // Retry once for connection errors
         await new Promise(resolve => setTimeout(resolve, 1000));
         userProgress = await prisma.userProgress.findFirst({
@@ -62,8 +61,9 @@ export async function POST(request: Request) {
             quality: null,
           },
         });
-      } catch (error: any) {
-        if (error.code === 'P1017' || error.code === 'P1001' || error.code === 'P1008') {
+      } catch (error: unknown) {
+        const dbError = error as { code?: string };
+        if (dbError.code === 'P1017' || dbError.code === 'P1001' || dbError.code === 'P1008') {
           // Retry once for connection errors
           await new Promise(resolve => setTimeout(resolve, 1000));
           userProgress = await prisma.userProgress.create({
@@ -124,8 +124,9 @@ export async function POST(request: Request) {
         },
         data: updatedData,
       });
-    } catch (error: any) {
-      if (error.code === 'P1017' || error.code === 'P1001' || error.code === 'P1008') {
+    } catch (error: unknown) {
+      const dbError = error as { code?: string };
+      if (dbError.code === 'P1017' || dbError.code === 'P1001' || dbError.code === 'P1008') {
         // Retry once for connection errors
         await new Promise(resolve => setTimeout(resolve, 1000));
         updatedProgress = await prisma.userProgress.update({
