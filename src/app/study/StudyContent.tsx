@@ -13,6 +13,12 @@ import {
   Text,
   Loader,
   Alert,
+  Group,
+  Badge,
+  Progress,
+  Card,
+  Stack,
+  SimpleGrid
 } from '@mantine/core';
 
 interface Section {
@@ -24,6 +30,7 @@ interface Section {
   createdAt: string;
   words: unknown[];
   totalWords: number;
+  learnedWords: number;
 }
 
 export default function StudyContent() {
@@ -32,8 +39,7 @@ export default function StudyContent() {
   const sectionId = searchParams.get('sectionId');
   const { status } = useSession();
 
-  const [sectionName, setSectionName] = useState('Loading Section...');
-  const [totalWordsInSections, setTotalWordsInSections] = useState(0);
+  const [sectionData, setSectionData] = useState<Section | null>(null);
   const [sessionLength, setSessionLength] = useState('10');
   const [studyMode, setStudyMode] = useState<'all' | 'difficult'>('all');
   const [loading, setLoading] = useState(true);
@@ -58,13 +64,7 @@ export default function StudyContent() {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
           const data = await response.json();
-          const currentSection = data.find((s: Section) => s.id === parseInt(sectionId));
-          if (currentSection) {
-            setSectionName(currentSection.name);
-            setTotalWordsInSections(currentSection.totalWords);
-          } else {
-            setError('Section not found.');
-          }
+          setSectionData(data);
         } catch (e: unknown) {
           setError(e instanceof Error ? e.message : 'An unknown error occurred');
         } finally {
@@ -76,6 +76,8 @@ export default function StudyContent() {
   }, [sectionId, status, router]);
 
   const estimatedTime = (parseInt(sessionLength) / 10) * 1;
+  const progressPercentage = sectionData ? 
+    (sectionData.totalWords > 0 ? (sectionData.learnedWords / sectionData.totalWords) * 100 : 0) : 0;
 
   const handleStartStudy = () => {
     if (sectionId) {
@@ -85,10 +87,14 @@ export default function StudyContent() {
     }
   };
 
+  const handleGoBack = () => {
+    router.push('/sections');
+  };
+
   if (status === 'loading' || loading) {
     return (
-      <Container style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <Loader />
+      <Container style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+        <Loader size="lg" />
       </Container>
     );
   }
@@ -96,49 +102,149 @@ export default function StudyContent() {
   if (error) {
     return (
       <Container>
-        <Alert color="red">{error}</Alert>
+        <Alert color="red" mb="md">
+          ❌ {error}
+        </Alert>
+        <Button onClick={handleGoBack}>
+          ← Back to Sections
+        </Button>
       </Container>
     );
   }
 
-  if (status === 'authenticated') {
+  if (status === 'authenticated' && sectionData) {
+    const wordsLeft = sectionData.totalWords - sectionData.learnedWords;
+    const isCompleted = wordsLeft === 0;
+    
     return (
-      <Container>
-        <Paper withBorder p="md" radius="md">
-          <Title order={2} style={{ marginBottom: '20px' }}>
-            Study Setup for {sectionName}
-          </Title>
-          <Select
-            label="Session Length"
-            value={sessionLength}
-            onChange={(value) => setSessionLength(value || '10')}
-            data={[
-              { value: '10', label: '10 Words' },
-              { value: '20', label: '20 Words' },
-              { value: '50', label: '50 Words' },
-              {
-                value: totalWordsInSections.toString(),
-                label: `All Words (${totalWordsInSections})`,
-              },
-            ]}
-            style={{ marginBottom: '20px' }}
-          />
-          <Text size="sm" style={{ marginBottom: '20px' }}>
-            Estimated time: {estimatedTime} minutes
-          </Text>
-          <Radio.Group
-            name="studyMode"
-            label="Study Mode"
-            value={studyMode}
-            onChange={(value) => setStudyMode(value as 'all' | 'difficult')}
-            style={{ marginBottom: '20px' }}
-          >
-            <Radio value="all" label="All Words" />
-            <Radio value="difficult" label="Difficult Words" />
-          </Radio.Group>
-          <Button onClick={handleStartStudy} fullWidth>
-            Start Study Session
+      <Container size="md">
+        {/* Header */}
+        <Group justify="space-between" mb="xl">
+          <Button variant="subtle" onClick={handleGoBack}>
+            ← Back to Sections
           </Button>
+          <Badge color={isCompleted ? 'green' : 'blue'} size="lg">
+            {isCompleted ? '✅ Completed' : `${wordsLeft} words left`}
+          </Badge>
+        </Group>
+
+        {/* Section Info */}
+        <Paper withBorder p="lg" radius="md" mb="xl" style={{ background: 'linear-gradient(135deg, #667eea10, #764ba210)' }}>
+          <Group justify="space-between" align="start" mb="md">
+            <div>
+              <Title order={2} mb="xs">{sectionData.name} 📚</Title>
+              <Text c="dimmed" size="md">
+                {sectionData.description || "Master essential Hebrew vocabulary"}
+              </Text>
+            </div>
+          </Group>
+
+          {/* Progress Bar */}
+          <div>
+            <Group justify="space-between" mb="xs">
+              <Text size="sm" fw={500}>Your Progress</Text>
+              <Text size="sm" c="dimmed">{Math.round(progressPercentage)}%</Text>
+            </Group>
+            <Progress 
+              value={progressPercentage} 
+              size="lg" 
+              radius="md" 
+              color={isCompleted ? 'green' : 'blue'}
+              mb="md"
+            />
+            <Group justify="space-between">
+              <Text size="sm" c="dimmed">
+                {sectionData.learnedWords} words learned
+              </Text>
+              <Text size="sm" c="dimmed">
+                {sectionData.totalWords} total words
+              </Text>
+            </Group>
+          </div>
+        </Paper>
+
+        {/* Study Setup */}
+        <Paper withBorder p="lg" radius="md" mb="xl">
+          <Title order={3} mb="lg">
+            {isCompleted ? '🔄 Review Session Setup' : '🚀 Study Session Setup'}
+          </Title>
+          
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
+            {/* Session Length */}
+            <Card shadow="xs" padding="md" radius="md" withBorder>
+              <Text fw={500} mb="md">📊 Session Length</Text>
+              <Select
+                value={sessionLength}
+                onChange={(value) => setSessionLength(value || '10')}
+                data={[
+                  { value: '5', label: '5 Words (Quick Review)' },
+                  { value: '10', label: '10 Words (Recommended)' },
+                  { value: '20', label: '20 Words (Extended)' },
+                  { value: '50', label: '50 Words (Marathon)' },
+                  {
+                    value: Math.min(sectionData.totalWords, wordsLeft || sectionData.totalWords).toString(),
+                    label: isCompleted ? 
+                      `All Words (${sectionData.totalWords})` : 
+                      `Remaining Words (${wordsLeft})`,
+                  },
+                ]}
+                size="md"
+              />
+              <Text size="sm" c="dimmed" mt="xs">
+                ⏱️ Estimated time: ~{estimatedTime} minutes
+              </Text>
+            </Card>
+
+            {/* Study Mode */}
+            <Card shadow="xs" padding="md" radius="md" withBorder>
+              <Text fw={500} mb="md">🎯 Study Mode</Text>
+              <Radio.Group
+                value={studyMode}
+                onChange={(value) => setStudyMode(value as 'all' | 'difficult')}
+              >
+                <Stack gap="sm">
+                  <Radio 
+                    value="all" 
+                    label="All Words"
+                    description="Practice all available words"
+                  />
+                  <Radio 
+                    value="difficult" 
+                    label="Difficult Words Only"
+                    description="Focus on challenging vocabulary"
+                  />
+                </Stack>
+              </Radio.Group>
+            </Card>
+          </SimpleGrid>
+        </Paper>
+
+        {/* Action Buttons */}
+        <Paper withBorder p="lg" radius="md" style={{ textAlign: 'center' }}>
+          <Group justify="center" gap="lg">
+            <Button 
+              size="xl" 
+              onClick={handleStartStudy}
+              style={{ 
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                padding: '12px 32px'
+              }}
+            >
+              {isCompleted ? '🔄 Start Review' : '🚀 Begin Study Session'}
+            </Button>
+          </Group>
+          
+          {!isCompleted && (
+            <Text size="sm" c="dimmed" mt="lg">
+              💡 Pro tip: Start with 10 words to build momentum, then increase as you get comfortable!
+            </Text>
+          )}
+          
+          {isCompleted && (
+            <Alert color="green" variant="light" mt="lg">
+              🎉 Congratulations! You've completed this section. Keep reviewing to maintain your knowledge.
+            </Alert>
+          )}
         </Paper>
       </Container>
     );

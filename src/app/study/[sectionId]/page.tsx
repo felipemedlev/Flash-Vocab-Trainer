@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 interface Section {
   id: number;
@@ -18,6 +19,14 @@ export default function StudySetupPage() {
   const params = useParams();
   const router = useRouter();
   const sectionId = params.sectionId;
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/login');
+      return;
+    }
+  }, [status, router]);
 
   useEffect(() => {
     if (!sectionId) {
@@ -25,33 +34,39 @@ export default function StudySetupPage() {
       return;
     }
     async function fetchSection() {
-      try {
-        const response = await fetch(`/api/sections/${sectionId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setSection(data);
+      if (status === 'authenticated') {
+        try {
+          const response = await fetch(`/api/sections/${sectionId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setSection(data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch section:", error);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error("Failed to fetch section:", error);
-      } finally {
-        setLoading(false);
       }
     }
 
     fetchSection();
-  }, [sectionId, router]);
+  }, [sectionId, router, status]);
 
   const handleStartSession = () => {
     const sessionUrl = `/study/flashcard?sectionId=${sectionId}&length=${sessionLength}&focus=${focusMode}&mode=${studyMode}`;
     router.push(sessionUrl);
   };
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center h-full">
         <p>Loading...</p>
       </div>
     );
+  }
+
+  if (status === 'unauthenticated') {
+    return null; // Will redirect in useEffect
   }
 
   if (!section) {

@@ -19,7 +19,7 @@ export default function FlashcardContent() {
   const searchParams = useSearchParams();
   const sectionId = searchParams.get("sectionId");
   const sessionLength = searchParams.get("length");
-  const focusMode = searchParams.get("focus");
+  const studyMode = searchParams.get("mode"); // Changed from focusMode to studyMode
   const { status } = useSession();
 
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -37,7 +37,7 @@ export default function FlashcardContent() {
   }, [status, router]);
 
   const fetchFlashcards = useCallback(async () => {
-    if (!sectionId || !sessionLength || !focusMode) {
+    if (!sectionId || !sessionLength || !studyMode) { // Changed focusMode to studyMode
       setError("Missing study parameters.");
       setLoading(false);
       return;
@@ -45,7 +45,7 @@ export default function FlashcardContent() {
     if (status === "authenticated") {
       try {
         const response = await fetch(
-          `/api/words?sectionId=${sectionId}&length=${sessionLength}&mode=${focusMode}`
+          `/api/words?sectionId=${sectionId}&length=${sessionLength}&mode=${studyMode}` // Changed focusMode to studyMode
         );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -61,7 +61,7 @@ export default function FlashcardContent() {
         setLoading(false);
       }
     }
-  }, [sectionId, sessionLength, status, focusMode]);
+  }, [sectionId, sessionLength, status, studyMode]);
 
   useEffect(() => {
     fetchFlashcards();

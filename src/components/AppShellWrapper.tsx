@@ -1,13 +1,15 @@
 'use client';
 
-import { AppShell, Burger, Group, UnstyledButton } from '@mantine/core';
+import { AppShell, Burger, Group, UnstyledButton, Button } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
 
 export function AppShellWrapper({ children }: { children: React.ReactNode }) {
   const [opened, { toggle }] = useDisclosure();
   const pathname = usePathname();
+  const { data: session, status } = useSession();
 
   // Hide AppShell on specific routes if needed
   if (pathname === '/auth/login' || pathname === '/auth/register') {
@@ -27,21 +29,65 @@ export function AppShellWrapper({ children }: { children: React.ReactNode }) {
             <UnstyledButton component={Link} href="/">
               Ulpan Flashcards
             </UnstyledButton>
-            <Group ml="xl" gap={0} visibleFrom="sm">
-              <UnstyledButton component={Link} href="/dashboard">Dashboard</UnstyledButton>
-              <UnstyledButton component={Link} href="/study">Study</UnstyledButton>
-              <UnstyledButton component={Link} href="/profile">Profile</UnstyledButton>
-              <UnstyledButton component={Link} href="/upload">Upload</UnstyledButton>
+            <Group ml="xl" gap="md" visibleFrom="sm">
+              {session ? (
+                <>
+                  <UnstyledButton component={Link} href="/dashboard" p="sm" style={{ borderRadius: '4px' }}>
+                    📊 Dashboard
+                  </UnstyledButton>
+                  <UnstyledButton component={Link} href="/sections" p="sm" style={{ borderRadius: '4px' }}>
+                    📚 Learn
+                  </UnstyledButton>
+                  <UnstyledButton component={Link} href="/profile" p="sm" style={{ borderRadius: '4px' }}>
+                    👤 Profile
+                  </UnstyledButton>
+                  <UnstyledButton component={Link} href="/upload" p="sm" style={{ borderRadius: '4px' }}>
+                    📤 Upload
+                  </UnstyledButton>
+                  <UnstyledButton onClick={() => signOut()} p="sm" style={{ borderRadius: '4px' }}>
+                    🚪 Logout
+                  </UnstyledButton>
+                </>
+              ) : (
+                <Group gap="xs">
+                  <Button component={Link} href="/auth/login" variant="outline" size="sm">
+                    Login
+                  </Button>
+                  <Button component={Link} href="/auth/register" size="sm">
+                    Register
+                  </Button>
+                </Group>
+              )}
             </Group>
           </Group>
         </Group>
       </AppShell.Header>
 
       <AppShell.Navbar py="md" px={4}>
-        <UnstyledButton component={Link} href="/dashboard">Dashboard</UnstyledButton>
-        <UnstyledButton component={Link} href="/study">Study</UnstyledButton>
-        <UnstyledButton component={Link} href="/profile">Profile</UnstyledButton>
-        <UnstyledButton component={Link} href="/upload">Upload</UnstyledButton>
+        {session ? (
+          <>
+            <UnstyledButton component={Link} href="/dashboard" p="md" style={{ borderRadius: '4px' }}>
+              📊 Dashboard
+            </UnstyledButton>
+            <UnstyledButton component={Link} href="/sections" p="md" style={{ borderRadius: '4px' }}>
+              📚 Learn
+            </UnstyledButton>
+            <UnstyledButton component={Link} href="/profile" p="md" style={{ borderRadius: '4px' }}>
+              👤 Profile
+            </UnstyledButton>
+            <UnstyledButton component={Link} href="/upload" p="md" style={{ borderRadius: '4px' }}>
+              📤 Upload
+            </UnstyledButton>
+            <UnstyledButton onClick={() => signOut()} p="md" style={{ borderRadius: '4px' }}>
+              🚪 Logout
+            </UnstyledButton>
+          </>
+        ) : (
+          <>
+            <UnstyledButton component={Link} href="/auth/login" p="md">Login</UnstyledButton>
+            <UnstyledButton component={Link} href="/auth/register" p="md">Register</UnstyledButton>
+          </>
+        )}
       </AppShell.Navbar>
       <AppShell.Main>
         <div className="container mx-auto p-4 sm:p-6 lg:p-8">
