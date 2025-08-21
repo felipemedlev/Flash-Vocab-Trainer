@@ -14,24 +14,82 @@ export async function GET(request: Request) {
   const length = searchParams.get('length');
   const mode = searchParams.get('mode') || searchParams.get('focus'); // 'all' or 'difficult'
 
+  // Validate and sanitize length parameter to prevent performance issues
+  let validatedLength = 20; // Default
+  if (length) {
+    const parsedLength = parseInt(length);
+    if (!isNaN(parsedLength) && parsedLength > 0) {
+      validatedLength = Math.min(parsedLength, 100); // Cap at 100 to prevent performance issues
+    }
+  }
+
   if (!sectionId) {
     return NextResponse.json({ message: 'Section ID is required' }, { status: 400 });
   }
 
   try {
-    const sectionWordsWithProgress = await prisma.word.findMany({
-      where: {
-        sectionId: parseInt(sectionId),
-      },
-      include: {
-        progress: {
-          where: {
-            userId: parseInt(session.user.id),
-          },
-          take: 1, // We only need one progress entry per word for the current user
+    // Add connection retry logic for database operations
+    const retryOperation = async <T>(operation: () => Promise<T>, maxRetries = 3): Promise<T> => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          return await operation();
+        } catch (error: any) {
+          console.log(`Database operation attempt ${attempt} failed:`, error.message);
+          
+          // Check if it's a connection error that we can retry
+          if (error.code === 'P1017' || error.code === 'P1001' || error.code === 'P1008') {
+            if (attempt < maxRetries) {
+              // Wait before retrying (exponential backoff)
+              const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+              console.log(`Retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
+            }
+          }
+          
+          // If it's not a retryable error or we've exhausted retries, throw the error
+          throw error;
+        }
+      }
+      throw new Error('Max retries exceeded');
+    };
+
+    // Optimize: Limit the number of words fetched based on session length
+    const maxWordsToFetch = validatedLength; // Use validated length
+    
+    // First, get a count of total words in the section for better decision making
+    const totalWordsCount = await retryOperation(() => 
+      prisma.word.count({
+        where: {
+          sectionId: parseInt(sectionId),
+        }
+      })
+    );
+
+    if (totalWordsCount === 0) {
+      return NextResponse.json({ message: 'No words found in this section' }, { status: 404 });
+    }
+
+    // Optimize: Use more efficient query with better indexing
+    const sectionWordsWithProgress = await retryOperation(() => 
+      prisma.word.findMany({
+        where: {
+          sectionId: parseInt(sectionId),
         },
-      },
-    });
+        take: maxWordsToFetch, // Limit the number of words fetched
+        include: {
+          progress: {
+            where: {
+              userId: parseInt(session.user.id),
+            },
+            take: 1, // We only need one progress entry per word for the current user
+          },
+        },
+        orderBy: {
+          id: 'asc' // Consistent ordering for better caching
+        }
+      })
+    );
 
     if (sectionWordsWithProgress.length === 0) {
       return NextResponse.json({ message: 'No words found in this section' }, { status: 404 });
@@ -89,7 +147,7 @@ export async function GET(request: Request) {
         word: word
       }));
       
-      const prioritizedWords = getWordsForReview(wordsForSM2, parseInt(length || '20'));
+      const prioritizedWords = getWordsForReview(wordsForSM2, validatedLength);
       
       // Convert back to word format and add some new words if needed
       const reviewWords = prioritizedWords.map(item => 
@@ -100,33 +158,34 @@ export async function GET(request: Request) {
       const newWords = wordsWithLearningData
         .filter(word => word.progress.timesSeen === 0)
         .sort(() => 0.5 - Math.random())
-        .slice(0, Math.max(0, parseInt(length || '10') - reviewWords.length));
+        .slice(0, Math.max(0, validatedLength - reviewWords.length));
       
       wordsToStudy = [...reviewWords, ...newWords];
     }
 
     // Apply session length limit
-    if (length && length !== 'all') {
-      const numWords = parseInt(length);
-      if (!isNaN(numWords) && numWords > 0) {
-        wordsToStudy = wordsToStudy.slice(0, numWords);
-      }
-    }
+    wordsToStudy = wordsToStudy.slice(0, validatedLength);
 
     // Ensure we have words to study after filtering/slicing
     if (wordsToStudy.length === 0 && sectionWordsWithProgress.length > 0) {
       // Fallback: if no "difficult" words or selected length is too small, just pick random words
-      wordsToStudy = sectionWordsWithProgress.sort(() => 0.5 - Math.random()).slice(0, parseInt(length || '10'));
+      wordsToStudy = sectionWordsWithProgress.sort(() => 0.5 - Math.random()).slice(0, validatedLength);
     } else if (wordsToStudy.length === 0) {
       return NextResponse.json({ message: 'No words to study based on criteria' }, { status: 404 });
     }
 
-    const allEnglishTranslations = await prisma.word.findMany({
-      select: {
-        englishTranslation: true,
-      },
-    });
-    const uniqueEnglishTranslations = Array.from(new Set(allEnglishTranslations.map(w => w.englishTranslation)));
+    // Optimize: Only fetch English translations from the current section, not all words
+    const sectionEnglishTranslations = await retryOperation(() => 
+      prisma.word.findMany({
+        where: {
+          sectionId: parseInt(sectionId),
+        },
+        select: {
+          englishTranslation: true,
+        },
+      })
+    );
+    const uniqueEnglishTranslations = Array.from(new Set(sectionEnglishTranslations.map(w => w.englishTranslation)));
 
     const flashcards = wordsToStudy.map(word => {
       const correctTranslation = word.englishTranslation;

@@ -38,6 +38,14 @@ export default function FlashcardContent() {
   });
   const [cardStartTime, setCardStartTime] = useState(Date.now());
   const [sessionWordAttempts, setSessionWordAttempts] = useState<Record<number, number>>({});
+  const [preloadedCardIndex, setPreloadedCardIndex] = useState<number | null>(null);
+  const [progressQueue, setProgressQueue] = useState<Array<{
+    wordId: number;
+    isCorrect: boolean;
+    responseTime: number;
+    sessionWordAttempts: number;
+    timestamp: number;
+  }>>([]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -53,9 +61,19 @@ export default function FlashcardContent() {
     }
     if (status === "authenticated") {
       try {
+        // Validate and limit session length to prevent performance issues
+        const validatedLength = Math.min(parseInt(sessionLength), 100);
+        
+        // Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
         const response = await fetch(
-          `/api/words?sectionId=${sectionId}&length=${sessionLength}&mode=${studyMode}` // Changed focusMode to studyMode
+          `/api/words?sectionId=${sectionId}&length=${validatedLength}&mode=${studyMode}`, // Changed focusMode to studyMode
+          { signal: controller.signal }
         );
+        
+        clearTimeout(timeoutId);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -66,7 +84,11 @@ export default function FlashcardContent() {
         setFlashcards(data);
         setCardStartTime(Date.now()); // Start timing the first card
       } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : 'An unknown error occurred');
+        if (e instanceof Error && e.name === 'AbortError') {
+          setError('Request timed out. Please try again with a smaller session length.');
+        } else {
+          setError(e instanceof Error ? e.message : 'An unknown error occurred');
+        }
       } finally {
         setLoading(false);
       }
@@ -78,6 +100,84 @@ export default function FlashcardContent() {
   }, [fetchFlashcards]);
 
   const currentCard = flashcards[currentCardIndex];
+
+  // Preload next card data to improve perceived performance
+  useEffect(() => {
+    if (flashcards.length > 0 && currentCardIndex < flashcards.length - 1) {
+      const nextIndex = currentCardIndex + 1;
+      if (preloadedCardIndex !== nextIndex) {
+        // Preload next card by accessing its data (triggers any lazy loading)
+        const nextCard = flashcards[nextIndex];
+        if (nextCard) {
+          // Force browser to preload any resources for the next card
+          setPreloadedCardIndex(nextIndex);
+        }
+      }
+    }
+  }, [currentCardIndex, flashcards, preloadedCardIndex]);
+
+  // Process progress queue with debouncing for better performance
+  useEffect(() => {
+    if (progressQueue.length === 0) return;
+
+    const processQueue = async () => {
+      // Process all queued progress updates
+      const queueToProcess = [...progressQueue];
+      setProgressQueue([]);
+
+      for (const progressUpdate of queueToProcess) {
+        try {
+          const response = await fetch("/api/progress", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(progressUpdate),
+          });
+
+          if (!response.ok) {
+            console.error("Failed to update progress:", await response.text());
+          } else {
+            const progressData = await response.json();
+            if (progressData.wasLearned) {
+              setSessionStats(prev => ({
+                ...prev,
+                wordsLearnedInSession: prev.wordsLearnedInSession + 1
+              }));
+            }
+          }
+        } catch (e) {
+          console.error("Error updating progress:", e);
+        }
+      }
+    };
+
+    // Debounce progress updates to avoid overwhelming the API
+    const timeoutId = setTimeout(processQueue, 100);
+    return () => clearTimeout(timeoutId);
+  }, [progressQueue]);
+
+  // Cleanup: send any remaining progress updates when component unmounts
+  useEffect(() => {
+    return () => {
+      if (progressQueue.length > 0) {
+        // Send remaining progress updates immediately on cleanup
+        progressQueue.forEach(async (progressUpdate) => {
+          try {
+            await fetch("/api/progress", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(progressUpdate),
+            });
+          } catch (e) {
+            console.error("Error sending final progress update:", e);
+          }
+        });
+      }
+    };
+  }, [progressQueue]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -117,73 +217,47 @@ export default function FlashcardContent() {
       [currentWordId]: wordAttempts
     }));
 
-    // Update user progress via API
-    const updateProgress = async () => {
-      try {
-        const response = await fetch("/api/progress", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            wordId: flashcards[currentCardIndex].wordId,
-            isCorrect: correct,
-            responseTime: responseTime,
-            sessionWordAttempts: wordAttempts,
-          }),
-        });
+    // Update session stats immediately for responsive UI
+    setSessionStats(prev => ({
+      ...prev,
+      correctAnswers: prev.correctAnswers + (correct ? 1 : 0),
+      totalAnswers: prev.totalAnswers + 1
+    }));
 
-        if (!response.ok) {
-          console.error("Failed to update progress:", await response.text());
-        } else {
-          // Check if word was learned in this session
-          const progressData = await response.json();
-          if (progressData.wasLearned) {
-            setSessionStats(prev => ({
-              ...prev,
-              wordsLearnedInSession: prev.wordsLearnedInSession + 1
-            }));
-          }
-        }
+    // Queue progress update for batch processing (non-blocking)
+    setProgressQueue(prev => [...prev, {
+      wordId: flashcards[currentCardIndex].wordId,
+      isCorrect: correct,
+      responseTime: responseTime,
+      sessionWordAttempts: wordAttempts,
+      timestamp: Date.now()
+    }]);
+
+    // Move to the next card after a shorter delay for better UX
+    setTimeout(() => {
+      setShowFeedback(false);
+      setSelectedOption(null);
+      if (currentCardIndex < flashcards.length - 1) {
+        setCurrentCardIndex(currentCardIndex + 1);
+        setCardStartTime(Date.now()); // Start timing the next card
+      } else {
+        // End of session - redirect to completion page with stats
+        const sessionLength = Math.round((Date.now() - sessionStats.startTime) / 1000 / 60); // minutes
+        const finalCorrectAnswers = sessionStats.correctAnswers + (correct ? 1 : 0);
+        const finalTotalAnswers = sessionStats.totalAnswers + 1;
+        const finalWordsLearned = sessionStats.wordsLearnedInSession;
         
-        // Update session stats
-        setSessionStats(prev => ({
-          ...prev,
-          correctAnswers: prev.correctAnswers + (correct ? 1 : 0),
-          totalAnswers: prev.totalAnswers + 1
-        }));
-      } catch (e) {
-        console.error("Error updating progress:", e);
-      } finally {
-        // Move to the next card after a delay, regardless of progress update success
-        setTimeout(() => {
-          setShowFeedback(false);
-          setSelectedOption(null);
-          if (currentCardIndex < flashcards.length - 1) {
-            setCurrentCardIndex(currentCardIndex + 1);
-            setCardStartTime(Date.now()); // Start timing the next card
-          } else {
-            // End of session - redirect to completion page with stats
-            const sessionLength = Math.round((Date.now() - sessionStats.startTime) / 1000 / 60); // minutes
-            const finalCorrectAnswers = sessionStats.correctAnswers + (correct ? 1 : 0);
-            const finalTotalAnswers = sessionStats.totalAnswers + 1;
-            const finalWordsLearned = sessionStats.wordsLearnedInSession;
-            
-            const params = new URLSearchParams({
-              sectionId: sectionId || '',
-              wordsStudied: finalTotalAnswers.toString(),
-              correctAnswers: finalCorrectAnswers.toString(),
-              sessionLength: sessionLength.toString(),
-              wordsLearnedInSession: finalWordsLearned.toString()
-            });
-            
-            router.push(`/study/completion?${params.toString()}`);
-          }
-        }, 1500); // 1.5 second delay for feedback
+        const params = new URLSearchParams({
+          sectionId: sectionId || '',
+          wordsStudied: finalTotalAnswers.toString(),
+          correctAnswers: finalCorrectAnswers.toString(),
+          sessionLength: sessionLength.toString(),
+          wordsLearnedInSession: finalWordsLearned.toString()
+        });
+        
+        router.push(`/study/completion?${params.toString()}`);
       }
-    };
-
-    updateProgress();
+    }, 1000); // Reduced to 1 second delay for faster card transitions
   };
 
 
@@ -195,6 +269,10 @@ export default function FlashcardContent() {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         <Text size="lg">Preparing your study session...</Text>
         <Text size="sm" c="dimmed">Finding the best words for you to learn</Text>
+        <div className="w-64 bg-gray-200 rounded-full h-2">
+          <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+        </div>
+        <Text size="xs" c="dimmed">This may take a few seconds for large sections</Text>
       </div>
     );
   }

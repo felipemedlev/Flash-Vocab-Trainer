@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/db';
 import { calculateSM2, mapPerformanceToQuality } from '@/lib/sm2-algorithm';
+import { UserProgress } from '@prisma/client';
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -18,31 +19,74 @@ export async function POST(request: Request) {
   try {
     const userId = session.user.id;
 
-    let userProgress = await prisma.userProgress.findFirst({
-      where: {
-        userId: parseInt(session.user.id),
-        wordId: wordId,
-      },
-    });
-
-    if (!userProgress) {
-      userProgress = await prisma.userProgress.create({
-        data: {
+    let userProgress: UserProgress | null = null;
+    
+    try {
+      userProgress = await prisma.userProgress.findFirst({
+        where: {
           userId: parseInt(session.user.id),
           wordId: wordId,
-          correctCount: 0,
-          incorrectCount: 0,
-          consecutiveCorrect: 0,
-          timesSeen: 0,
-          isManuallyLearned: false,
-          // SM-2 defaults
-          easinessFactor: 2.5,
-          interval: 1,
-          repetition: 0,
-          nextReviewDate: new Date(),
-          quality: null,
         },
       });
+    } catch (error: any) {
+      if (error.code === 'P1017' || error.code === 'P1001' || error.code === 'P1008') {
+        // Retry once for connection errors
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        userProgress = await prisma.userProgress.findFirst({
+          where: {
+            userId: parseInt(session.user.id),
+            wordId: wordId,
+          },
+        });
+      } else {
+        throw error;
+      }
+    }
+
+    if (!userProgress) {
+      try {
+        userProgress = await prisma.userProgress.create({
+          data: {
+            userId: parseInt(session.user.id),
+            wordId: wordId,
+            correctCount: 0,
+            incorrectCount: 0,
+            consecutiveCorrect: 0,
+            timesSeen: 0,
+            isManuallyLearned: false,
+            // SM-2 defaults
+            easinessFactor: 2.5,
+            interval: 1,
+            repetition: 0,
+            nextReviewDate: new Date(),
+            quality: null,
+          },
+        });
+      } catch (error: any) {
+        if (error.code === 'P1017' || error.code === 'P1001' || error.code === 'P1008') {
+          // Retry once for connection errors
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          userProgress = await prisma.userProgress.create({
+            data: {
+              userId: parseInt(session.user.id),
+              wordId: wordId,
+              correctCount: 0,
+              incorrectCount: 0,
+              consecutiveCorrect: 0,
+              timesSeen: 0,
+              isManuallyLearned: false,
+              // SM-2 defaults
+              easinessFactor: 2.5,
+              interval: 1,
+              repetition: 0,
+              nextReviewDate: new Date(),
+              quality: null,
+            },
+          });
+        } else {
+          throw error;
+        }
+      }
     }
 
     // Calculate SM-2 quality rating based on performance
@@ -72,12 +116,28 @@ export async function POST(request: Request) {
       isManuallyLearned: sm2Result.isLearned,
     };
 
-    const updatedProgress = await prisma.userProgress.update({
-      where: {
-        id: userProgress.id,
-      },
-      data: updatedData,
-    });
+    let updatedProgress: UserProgress;
+    try {
+      updatedProgress = await prisma.userProgress.update({
+        where: {
+          id: userProgress.id,
+        },
+        data: updatedData,
+      });
+    } catch (error: any) {
+      if (error.code === 'P1017' || error.code === 'P1001' || error.code === 'P1008') {
+        // Retry once for connection errors
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        updatedProgress = await prisma.userProgress.update({
+          where: {
+            id: userProgress.id,
+          },
+          data: updatedData,
+        });
+      } else {
+        throw error;
+      }
+    }
 
 
 

@@ -44,6 +44,8 @@ model Word {
   englishTranslation String
   createdAt         DateTime @default(now())
   progress          UserProgress[]
+
+  @@index([sectionId])
 }
 
 model UserProgress {
@@ -68,6 +70,10 @@ model UserProgress {
   
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([wordId])
+  @@index([nextReviewDate])
 }
 
 model SessionHistory {
