@@ -35,7 +35,7 @@ export default function FlashcardContent() {
     startTime: Date.now(),
     wordsLearnedInSession: 0
   });
-  const [wordsLearnedInSession, setWordsLearnedInSession] = useState(0);
+
   const [sessionWordsLearned, setSessionWordsLearned] = useState(0);
   const [cardStartTime, setCardStartTime] = useState(Date.now());
   const [sessionWordAttempts, setSessionWordAttempts] = useState<Record<number, number>>({});
@@ -279,7 +279,7 @@ export default function FlashcardContent() {
         router.push(`/study/completion?${params.toString()}`);
       }
     }, 1000); // Reduced to 1 second delay for faster card transitions
-  }, [showFeedback, flashcards, currentCardIndex, cardStartTime, sessionWordAttempts, sessionStats, sectionId, router, progressQueue]);
+  }, [showFeedback, flashcards, currentCardIndex, cardStartTime, sessionWordAttempts, sessionStats, sectionId, router, progressQueue, sessionWordsLearned]);
 
   // Keyboard shortcuts
   useEffect(() => {

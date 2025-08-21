@@ -41,6 +41,13 @@ function StudyPageContent() {
     );
   }
 
+  // Handle redirect when sectionId is provided
+  useEffect(() => {
+    if (sectionId && status === 'authenticated') {
+      router.replace(`/study/${sectionId}`);
+    }
+  }, [sectionId, status, router]);
+
   if (status === 'loading') {
     return (
       <Container style={{ textAlign: 'center', marginTop: '20vh' }}>
@@ -52,13 +59,6 @@ function StudyPageContent() {
   if (status === 'unauthenticated') {
     return null; // Will redirect in useEffect
   }
-
-  // Handle redirect when sectionId is provided
-  useEffect(() => {
-    if (sectionId && status === 'authenticated') {
-      router.replace(`/study/${sectionId}`);
-    }
-  }, [sectionId, status, router]);
 
   // Show loading while redirecting
   if (sectionId && status === 'authenticated') {

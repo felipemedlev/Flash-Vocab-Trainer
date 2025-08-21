@@ -60,7 +60,7 @@ function SessionCompletionContent() {
     if (status === 'unauthenticated') {
       router.push('/auth/login');
     }
-  }, [status]);
+  }, [status, router]);
 
   useEffect(() => {
     const recordSession = async () => {
