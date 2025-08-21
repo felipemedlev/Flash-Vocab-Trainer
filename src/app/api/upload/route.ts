@@ -108,7 +108,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      { message: "Section created successfully", section: newSection },
+      { message: "Section created successfully", section: newSection, sectionId: newSection.id },
       { status: 201 }
     );
   } catch (error) {
