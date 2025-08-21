@@ -12,7 +12,7 @@ import {
   Paper,
   Container,
   FileInput,
-  Anchor,
+
   Card,
   List,
   ThemeIcon
@@ -23,13 +23,12 @@ import {
   IconAlertCircle,
   IconCheck,
   IconDownload,
-  IconSparkles,
-  IconArrowLeft,
+
   IconBook,
   IconFileExcel,
   IconInfoCircle,
 } from '@tabler/icons-react';
-import Link from 'next/link';
+
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -153,7 +152,7 @@ export default function UploadPage() {
                         Section Created Successfully!
                       </Text>
                       <Text size="md" c="dimmed" ta="center">
-                        Your custom vocabulary section "{sectionName}" has been uploaded and is ready to study.
+                        Your custom vocabulary section &quot;{sectionName}&quot; has been uploaded and is ready to study.
                       </Text>
                     </Stack>
 

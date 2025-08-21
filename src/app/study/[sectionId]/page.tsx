@@ -330,7 +330,7 @@ export default function StudySetupPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {wordRows.map((row, index) => (
+                  {wordRows.map((row) => (
                     <tr key={row.id} className="hover:bg-gray-50">
                       <td className="border border-gray-300 p-2">
                         <textarea

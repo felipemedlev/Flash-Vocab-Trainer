@@ -104,7 +104,7 @@ function SessionCompletionContent() {
     if (status === 'authenticated') {
       recordSession();
     }
-  }, [sectionId, wordsStudied, correctAnswers, sessionLength, status]);
+  }, [sectionId, wordsStudied, correctAnswers, sessionLength, status, wordsLearnedInSession]);
 
   const getAccuracyColor = (accuracy: number) => {
     if (accuracy >= 90) return 'green';
@@ -212,7 +212,7 @@ function SessionCompletionContent() {
             {sessionStats.wordsLearnedInSession} New Word{sessionStats.wordsLearnedInSession !== 1 ? 's' : ''} Mastered!
           </Title>
           <Text c="dimmed" size="md">
-            You've successfully learned {sessionStats.wordsLearnedInSession} word{sessionStats.wordsLearnedInSession !== 1 ? 's' : ''} in this session using our intelligent spaced repetition system.
+            {`You've successfully learned ${sessionStats.wordsLearnedInSession} word${sessionStats.wordsLearnedInSession !== 1 ? 's' : ''} in this session using our intelligent spaced repetition system.`}
           </Text>
           <Badge color="green" variant="light" size="lg" mt="md">
             🧠 SM-2 Algorithm Applied
@@ -225,8 +225,8 @@ function SessionCompletionContent() {
         <Alert color="blue" variant="light" mb="xl">
           <Text fw={500} mb="xs">📚 Keep Building Your Knowledge!</Text>
           <Text size="sm">
-            While you didn't master any new words this session, you're reinforcing your existing knowledge. 
-            Consistent practice with our spaced repetition system will help you retain what you've learned!
+            {`While you didn't master any new words this session, you're reinforcing your existing knowledge. 
+            Consistent practice with our spaced repetition system will help you retain what you've learned!`}
           </Text>
         </Alert>
       )}

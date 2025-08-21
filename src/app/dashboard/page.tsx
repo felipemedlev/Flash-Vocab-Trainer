@@ -30,15 +30,6 @@ interface SectionProgress {
   learnedWords: number;
 }
 
-interface SectionProgress {
-  id: number;
-  name: string;
-  description: string;
-  isDefault: boolean;
-  totalWords: number;
-  learnedWords: number;
-}
-
 const ProgressChart = dynamic(() => import('./components/ProgressChart'), {
   ssr: false,
 });
