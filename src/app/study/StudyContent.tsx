@@ -242,7 +242,17 @@ export default function StudyContent() {
           
           {isCompleted && (
             <Alert color="green" variant="light" mt="lg">
-              🎉 Congratulations! You&apos;ve completed this section. Keep reviewing to maintain your knowledge.
+              <Stack gap="xs">
+                <Text fw={500}>🎉 Section Completed!</Text>
+                <Text size="sm">
+                  Congratulations! You&apos;ve mastered all words in this section. 
+                  Regular review will help maintain your knowledge.
+                </Text>
+                <Group gap="xs" mt="xs">
+                  <Badge color="green" variant="light">✅ All words learned</Badge>
+                  <Badge color="blue" variant="light">📈 Progress saved</Badge>
+                </Group>
+              </Stack>
             </Alert>
           )}
         </Paper>

@@ -33,11 +33,9 @@ export async function GET() {
 
     const sectionsWithProgress = sections.map((section: Section & { words: (Word & { progress: UserProgress[] })[] }) => {
       const totalWords = section.words.length;
-      const learnedWords = new Set(
-        section.words.flatMap(word =>
-          word.progress.filter(p => p.wordId === word.id).map(p => p.wordId)
-        )
-      ).size;
+      const learnedWords = section.words.filter(word => 
+        word.progress.some(p => p.isManuallyLearned)
+      ).length;
       return {
         id: section.id,
         name: section.name,

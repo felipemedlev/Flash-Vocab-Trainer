@@ -4,16 +4,16 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { 
-  Container, 
-  Title, 
-  Grid, 
-  Paper, 
-  Text, 
-  Loader, 
-  Button, 
-  Group, 
-  Badge, 
+import {
+  Container,
+  Title,
+  Grid,
+  Paper,
+  Text,
+  Loader,
+  Button,
+  Group,
+  Badge,
   Progress,
   Alert,
   Card,
@@ -64,6 +64,11 @@ export default function DashboardPage() {
   const [recentSections, setRecentSections] = useState<RecentSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [todayStudied, setTodayStudied] = useState(false);
+  const [dailyProgress, setDailyProgress] = useState({
+    wordsStudied: 0,
+    target: 10,
+    progress: 0
+  });
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -75,15 +80,15 @@ export default function DashboardPage() {
     const fetchData = async () => {
       if (status === 'authenticated') {
         try {
-          const [dashboardResponse, sectionsResponse] = await Promise.all([
+          const [dashboardResponse, sectionsResponse, sessionsResponse] = await Promise.all([
             fetch('/api/dashboard'),
-            fetch('/api/sections')
+            fetch('/api/sections'),
+            fetch('/api/sessions')
           ]);
           
           if (dashboardResponse.ok) {
             const data = await dashboardResponse.json();
             setDashboardData(data);
-            setTodayStudied(data.studyStreak > 0);
           }
           
           if (sectionsResponse.ok) {
@@ -93,6 +98,16 @@ export default function DashboardPage() {
               progress: section.totalWords > 0 ? (section.learnedWords / section.totalWords) * 100 : 0
             })).slice(0, 3); // Show top 3 recent sections
             setRecentSections(sectionsWithProgress);
+          }
+
+          if (sessionsResponse.ok) {
+            const sessionData = await sessionsResponse.json();
+            setDailyProgress({
+              wordsStudied: sessionData.todayWordsStudied,
+              target: sessionData.dailyTarget,
+              progress: sessionData.dailyProgress
+            });
+            setTodayStudied(sessionData.hasStudiedToday);
           }
         } catch (error) {
           console.error(error);
@@ -167,9 +182,20 @@ export default function DashboardPage() {
               <Text size="xs" c="dimmed">Goal</Text>
             </Group>
             <Text size="lg" fw={500}>Daily Target</Text>
-            <Progress value={todayStudied ? 100 : 0} color="green" size="sm" mt="xs" />
+            <Progress 
+              value={dailyProgress.progress} 
+              color={dailyProgress.progress >= 100 ? "green" : "blue"} 
+              size="sm" 
+              mt="xs" 
+            />
             <Text size="xs" c="dimmed" mt="xs">
-              {todayStudied ? '✅ Completed!' : '10 words remaining'}
+              {dailyProgress.progress >= 100 
+                ? '✅ Target achieved!' 
+                : `${Math.max(0, dailyProgress.target - dailyProgress.wordsStudied)} words remaining`
+              }
+            </Text>
+            <Text size="xs" c="dimmed">
+              {dailyProgress.wordsStudied}/{dailyProgress.target} words today
             </Text>
           </Card>
 
@@ -267,19 +293,47 @@ export default function DashboardPage() {
         </Paper>
 
         {/* Motivational CTA */}
-        {!todayStudied && (
+        {dailyProgress.progress < 100 && (
           <Paper withBorder p="lg" radius="md" style={{ background: 'linear-gradient(45deg, #e3f2fd, #f3e5f5)' }}>
             <Group justify="space-between">
               <div>
-                <Title order={4} mb="xs">Ready to study today? 🧠</Title>
-                <Text c="dimmed">Keep your streak alive and learn something new!</Text>
+                <Title order={4} mb="xs">
+                  {dailyProgress.wordsStudied === 0 
+                    ? 'Ready to start today? 🧠' 
+                    : `You're ${dailyProgress.target - dailyProgress.wordsStudied} words away from your goal! 🎯`
+                  }
+                </Title>
+                <Text c="dimmed">
+                  {dailyProgress.wordsStudied === 0 
+                    ? 'Keep your streak alive and learn something new!' 
+                    : 'Keep going to achieve your daily target!'
+                  }
+                </Text>
               </div>
               <Button 
                 size="lg" 
                 onClick={handleQuickStudy}
                 style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
               >
-                🚀 Start Learning
+                🚀 Continue Learning
+              </Button>
+            </Group>
+          </Paper>
+        )}
+        
+        {dailyProgress.progress >= 100 && (
+          <Paper withBorder p="lg" radius="md" style={{ background: 'linear-gradient(45deg, #e8f5e8, #f0f8ff)' }}>
+            <Group justify="space-between">
+              <div>
+                <Title order={4} mb="xs">🎉 Daily target achieved!</Title>
+                <Text c="dimmed">Great job! You can always study more to boost your progress.</Text>
+              </div>
+              <Button 
+                size="lg" 
+                onClick={handleQuickStudy}
+                variant="outline"
+              >
+                📚 Extra Practice
               </Button>
             </Group>
           </Paper>

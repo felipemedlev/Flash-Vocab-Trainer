@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/db';
+import { getWordsForReview, shouldReviewWord } from '@/lib/sm2-algorithm';
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const sectionId = searchParams.get('sectionId');
   const length = searchParams.get('length');
-  const mode = searchParams.get('focus'); // 'all' or 'difficult'
+  const mode = searchParams.get('mode') || searchParams.get('focus'); // 'all' or 'difficult'
 
   if (!sectionId) {
     return NextResponse.json({ message: 'Section ID is required' }, { status: 400 });
@@ -43,6 +44,12 @@ export async function GET(request: Request) {
         consecutiveCorrect: 0,
         timesSeen: 0,
         isManuallyLearned: false,
+        // SM-2 defaults
+        easinessFactor: 2.5,
+        interval: 1,
+        repetition: 0,
+        nextReviewDate: new Date(),
+        quality: null,
       };
       return { ...word, progress };
     });
@@ -50,26 +57,52 @@ export async function GET(request: Request) {
     let wordsToStudy = [];
 
     if (mode === 'difficult') {
-      // Prioritize words with incorrect answers or low consecutive correct answers
+      // Focus on words that are overdue or have low performance
       wordsToStudy = wordsWithLearningData
-        .filter(word => word.progress.incorrectCount > 0 || word.progress.consecutiveCorrect < 3)
-        .sort((a, b) => b.progress.incorrectCount - a.progress.incorrectCount); // Sort by most incorrect
-    } else { // 'all' mode or default
-      // Mix difficult words with new/learned words
-      const difficultWords = wordsWithLearningData
-        .filter(word => word.progress.incorrectCount > 0 || word.progress.consecutiveCorrect < 3)
-        .sort((a, b) => b.progress.incorrectCount - a.progress.incorrectCount);
-
-      const newAndLearnedWords = wordsWithLearningData
-        .filter(word => word.progress.incorrectCount === 0 && word.progress.consecutiveCorrect >= 3)
-        .sort(() => 0.5 - Math.random()); // Randomize learned words for occasional review
-
-      const unseenWords = wordsWithLearningData
+        .filter(word => {
+          const progress = word.progress;
+          const isOverdue = shouldReviewWord(progress.nextReviewDate);
+          const hasLowPerformance = progress.easinessFactor < 2.0 || progress.incorrectCount > progress.correctCount;
+          const isNotMastered = progress.repetition < 3;
+          
+          return isOverdue || hasLowPerformance || isNotMastered;
+        })
+        .sort((a, b) => {
+          // Sort by urgency: overdue first, then by difficulty (low easiness factor)
+          const aOverdue = shouldReviewWord(a.progress.nextReviewDate);
+          const bOverdue = shouldReviewWord(b.progress.nextReviewDate);
+          
+          if (aOverdue && !bOverdue) return -1;
+          if (!aOverdue && bOverdue) return 1;
+          
+          // Both overdue or both not overdue, sort by easiness factor (harder words first)
+          return a.progress.easinessFactor - b.progress.easinessFactor;
+        });
+    } else { // 'all' mode or default - use SM-2 intelligent scheduling
+      // Get words for review using SM-2 algorithm
+      const wordsForSM2 = wordsWithLearningData.map(word => ({
+        id: word.id,
+        nextReviewDate: word.progress.nextReviewDate,
+        repetition: word.progress.repetition,
+        easinessFactor: word.progress.easinessFactor,
+        interval: word.progress.interval,
+        word: word
+      }));
+      
+      const prioritizedWords = getWordsForReview(wordsForSM2, parseInt(length || '20'));
+      
+      // Convert back to word format and add some new words if needed
+      const reviewWords = prioritizedWords.map(item => 
+        wordsForSM2.find(w => w.id === item.id)?.word
+      ).filter(Boolean);
+      
+      // Add new words (never studied) if we have room
+      const newWords = wordsWithLearningData
         .filter(word => word.progress.timesSeen === 0)
-        .sort(() => 0.5 - Math.random());
-
-      // Simple mixing strategy: prioritize difficult, then new, then learned
-      wordsToStudy = [...difficultWords, ...unseenWords, ...newAndLearnedWords];
+        .sort(() => 0.5 - Math.random())
+        .slice(0, Math.max(0, parseInt(length || '10') - reviewWords.length));
+      
+      wordsToStudy = [...reviewWords, ...newWords];
     }
 
     // Apply session length limit
@@ -100,15 +133,36 @@ export async function GET(request: Request) {
       const incorrectOptions = uniqueEnglishTranslations
         .filter(t => t !== correctTranslation)
         .sort(() => 0.5 - Math.random())
-        .slice(0, 9); // Get 9 random incorrect options
+        .slice(0, 3); // Get 3 random incorrect options for better UX
 
       const options = [...incorrectOptions, correctTranslation].sort(() => 0.5 - Math.random());
+
+      // Determine word level based on SM-2 data
+      let level: 'new' | 'learning' | 'review' | 'mastered' = 'new';
+      const progress = word.progress;
+      
+      if (progress.timesSeen === 0) {
+        level = 'new';
+      } else if (progress.repetition < 3) {
+        level = 'learning';
+      } else if (shouldReviewWord(progress.nextReviewDate)) {
+        level = 'review';
+      } else {
+        level = 'mastered';
+      }
 
       return {
         wordId: word.id,
         hebrewText: word.hebrewText,
         correctTranslation: correctTranslation,
         options: options,
+        level: level,
+        sm2Data: {
+          easinessFactor: progress.easinessFactor,
+          interval: progress.interval,
+          repetition: progress.repetition,
+          nextReviewDate: progress.nextReviewDate
+        }
       };
     });
 

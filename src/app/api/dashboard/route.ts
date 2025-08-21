@@ -48,8 +48,13 @@ export async function GET() {
     const sectionsCompletedResults = await Promise.all(sectionsCompletedPromises);
     const sectionsCompleted = sectionsCompletedResults.filter(Boolean).length;
 
-    // Placeholder for study streak
-    const studyStreak = 0;
+    // Get actual study streak from user data
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { currentStreak: true, longestStreak: true }
+    });
+
+    const studyStreak = user?.currentStreak || 0;
 
     return NextResponse.json({
       wordsLearned,

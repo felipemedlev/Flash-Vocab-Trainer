@@ -2,6 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Container,
   Title,
@@ -31,6 +32,7 @@ interface UserStats {
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
@@ -67,6 +69,13 @@ export default function ProfilePage() {
     fetchProfileData();
   }, [session]);
 
+  // Redirect unauthenticated users to login
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/auth/login');
+    }
+  }, [status, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -95,20 +104,10 @@ export default function ProfilePage() {
     }
   };
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || loading || status === 'unauthenticated') {
     return (
       <Container style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
         <Loader size="lg" />
-      </Container>
-    );
-  }
-
-  if (status === 'unauthenticated') {
-    return (
-      <Container>
-        <Alert color="red">
-          🔒 Access Denied - Please log in to view your profile
-        </Alert>
       </Container>
     );
   }

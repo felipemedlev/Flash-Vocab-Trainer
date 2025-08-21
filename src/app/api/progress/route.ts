@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/db';
+import { calculateSM2, mapPerformanceToQuality } from '@/lib/sm2-algorithm';
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -8,7 +9,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const { wordId, isCorrect } = await request.json();
+  const { wordId, isCorrect, responseTime, sessionWordAttempts } = await request.json();
 
   if (!wordId || typeof isCorrect === 'undefined') {
     return NextResponse.json({ message: 'Word ID and correctness are required' }, { status: 400 });
@@ -34,39 +35,42 @@ export async function POST(request: Request) {
           consecutiveCorrect: 0,
           timesSeen: 0,
           isManuallyLearned: false,
+          // SM-2 defaults
+          easinessFactor: 2.5,
+          interval: 1,
+          repetition: 0,
+          nextReviewDate: new Date(),
+          quality: null,
         },
       });
     }
 
-    const updatedData: {
-      timesSeen: number;
-      lastSeen: Date;
-      correctCount?: number;
-      incorrectCount?: number;
-      consecutiveCorrect?: number;
-      isManuallyLearned?: boolean;
-    } = {
+    // Calculate SM-2 quality rating based on performance
+    const quality = mapPerformanceToQuality(isCorrect, responseTime, sessionWordAttempts);
+    
+    // Apply SM-2 algorithm
+    const sm2Result = calculateSM2({
+      quality,
+      easinessFactor: userProgress.easinessFactor,
+      interval: userProgress.interval,
+      repetition: userProgress.repetition,
+    });
+
+    const updatedData = {
       timesSeen: userProgress.timesSeen + 1,
       lastSeen: new Date(),
+      correctCount: isCorrect ? userProgress.correctCount + 1 : userProgress.correctCount,
+      incorrectCount: isCorrect ? userProgress.incorrectCount : userProgress.incorrectCount + 1,
+      consecutiveCorrect: isCorrect ? userProgress.consecutiveCorrect + 1 : 0,
+      
+      // SM-2 fields
+      easinessFactor: sm2Result.easinessFactor,
+      interval: sm2Result.interval,
+      repetition: sm2Result.repetition,
+      nextReviewDate: sm2Result.nextReviewDate,
+      quality: sm2Result.quality,
+      isManuallyLearned: sm2Result.isLearned,
     };
-
-    if (isCorrect) {
-      updatedData.correctCount = userProgress.correctCount + 1;
-      updatedData.consecutiveCorrect = userProgress.consecutiveCorrect + 1;
-      if (userProgress.incorrectCount > 0) {
-        // If the user was wrong before, reset incorrect count after a correct answer
-        updatedData.incorrectCount = 0;
-      }
-
-      // After 3 consecutive correct answers, mark as learned
-      if (updatedData.consecutiveCorrect >= 3) {
-        updatedData.isManuallyLearned = true;
-      }
-    } else {
-      updatedData.incorrectCount = userProgress.incorrectCount + 1;
-      updatedData.consecutiveCorrect = 0; // Reset consecutive correct on incorrect answer
-      updatedData.isManuallyLearned = false; // If previously learned, mark as not learned if answered incorrectly
-    }
 
     const updatedProgress = await prisma.userProgress.update({
       where: {
@@ -75,35 +79,18 @@ export async function POST(request: Request) {
       data: updatedData,
     });
 
-    // Streak logic
-    const user = await prisma.user.findUnique({ where: { id: parseInt(userId) } });
-    if (user) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const lastSession = user.updatedAt; // Using updatedAt for simplicity
-      lastSession.setHours(0, 0, 0, 0);
 
-      const diffTime = today.getTime() - lastSession.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      let newStreak = user.currentStreak;
-      if (diffDays === 1) {
-        newStreak++;
-      } else if (diffDays > 1) {
-        newStreak = 1;
+    return NextResponse.json({
+      ...updatedProgress,
+      wasLearned: sm2Result.isLearned && !userProgress.isManuallyLearned, // New learning in this session
+      sm2Info: {
+        quality: sm2Result.quality,
+        nextReview: sm2Result.nextReviewDate,
+        interval: sm2Result.interval,
+        repetition: sm2Result.repetition
       }
-
-      await prisma.user.update({
-        where: { id: parseInt(userId) },
-        data: {
-          currentStreak: newStreak,
-          longestStreak: Math.max(user.longestStreak, newStreak),
-          updatedAt: new Date(),
-        },
-      });
-    }
-
-    return NextResponse.json(updatedProgress);
+    });
   } catch (error) {
     console.error('Error updating user progress:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
