@@ -214,10 +214,10 @@ export async function GET(request: Request) {
           level = 'new';
         } else if (progress.repetition < 3) {
           level = 'learning';
-        } else if (shouldReviewWord(progress.nextReviewDate)) {
-          level = 'review';
-        } else {
+        } else if (progress.isManuallyLearned && !shouldReviewWord(progress.nextReviewDate)) {
           level = 'mastered';
+        } else {
+          level = 'review';
         }
 
         return {
@@ -281,10 +281,10 @@ export async function GET(request: Request) {
         level = 'new';
       } else if (progress.repetition < 3) {
         level = 'learning';
-      } else if (shouldReviewWord(progress.nextReviewDate)) {
-        level = 'review';
-      } else {
+      } else if (progress.isManuallyLearned && !shouldReviewWord(progress.nextReviewDate)) {
         level = 'mastered';
+      } else {
+        level = 'review';
       }
 
       return {

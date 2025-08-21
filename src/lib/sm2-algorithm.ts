@@ -51,6 +51,8 @@ export function calculateSM2(input: SM2Input): SM2Result {
       interval = 6;
     } else {
       interval = Math.round(interval * easinessFactor);
+      // Cap the interval to prevent extremely large values
+      interval = Math.min(interval, 365 * 10); // Max 10 years
     }
   }
   
@@ -65,18 +67,18 @@ export function calculateSM2(input: SM2Input): SM2Result {
   const nextReviewDate = new Date();
   nextReviewDate.setDate(nextReviewDate.getDate() + interval);
   
-  // Determine if word is considered "learned"
-  // A word is learned after 2 successful reviews (quality >= 3) with increasing intervals
-  // This provides faster user feedback while still using spaced repetition
-  const isLearned = repetition >= 2 && quality >= 3;
+  // Ensure the date is valid and not too far in the future
+  if (isNaN(nextReviewDate.getTime()) || nextReviewDate.getTime() > Date.now() + (365 * 10 * 24 * 60 * 60 * 1000)) {
+    // If date is invalid or too far in future, set to 1 year from now
+    nextReviewDate.setTime(Date.now() + (365 * 24 * 60 * 60 * 1000));
+  }
   
-  console.log('SM2 calculation:', {
-    quality,
-    repetition,
-    isLearned,
-    easinessFactor,
-    interval
-  });
+  // Determine if word is considered "learned"
+  // A word is learned after 3 successful reviews (quality >= 3) with increasing intervals
+  // This provides more reliable learning while still using spaced repetition
+  const isLearned = repetition >= 3 && quality >= 3;
+  
+
   
   return {
     easinessFactor,
@@ -199,14 +201,8 @@ export function getLearningStat(
       stats.new++;
     } else if (word.repetition < 3) {
       stats.learning++;
-    } else if (word.isManuallyLearned && word.nextReviewDate > now) {
-      // Check if it's due within next 7 days
-      const daysUntilDue = (word.nextReviewDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-      if (daysUntilDue <= 7) {
-        stats.review++;
-      } else {
-        stats.mastered++;
-      }
+    } else if (word.isManuallyLearned && !shouldReviewWord(word.nextReviewDate)) {
+      stats.mastered++;
     } else {
       stats.review++;
     }

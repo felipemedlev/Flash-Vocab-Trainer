@@ -151,9 +151,7 @@ export default function FlashcardContent() {
             console.error("Failed to update progress:", await response.text());
           } else {
             const progressData = await response.json();
-            console.log('Progress update result:', progressData);
             if (progressData.wasLearned) {
-              console.log('Word learned!', progressData);
               setSessionWordsLearned(prev => prev + 1);
             }
           }
@@ -254,9 +252,7 @@ export default function FlashcardContent() {
 
               if (response.ok) {
                 const progressData = await response.json();
-                console.log('Final progress update result:', progressData);
                 if (progressData.wasLearned) {
-                  console.log('Final word learned!', progressData);
                   finalWordsLearned += 1;
                 }
               }

@@ -4,8 +4,41 @@ import prisma from '@/lib/db';
 import { calculateSM2, mapPerformanceToQuality } from '@/lib/sm2-algorithm';
 import { UserProgress } from '@prisma/client';
 
+export async function GET(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const wordId = searchParams.get('wordId');
+
+  if (!wordId) {
+    return NextResponse.json({ message: 'Word ID is required' }, { status: 400 });
+  }
+
+  try {
+    const userProgress = await prisma.userProgress.findFirst({
+      where: {
+        userId: parseInt(session.user.id),
+        wordId: parseInt(wordId),
+      },
+    });
+
+    if (!userProgress) {
+      return NextResponse.json({ message: 'Progress not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(userProgress);
+  } catch (error) {
+    console.error('Error fetching user progress:', error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   const session = await auth();
+  
   if (!session?.user?.id) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
@@ -92,6 +125,8 @@ export async function POST(request: Request) {
     // Calculate SM-2 quality rating based on performance
     const quality = mapPerformanceToQuality(isCorrect, responseTime, sessionWordAttempts);
     
+
+    
     // Apply SM-2 algorithm
     const sm2Result = calculateSM2({
       quality,
@@ -100,6 +135,11 @@ export async function POST(request: Request) {
       repetition: userProgress.repetition,
     });
 
+    // Ensure the nextReviewDate is a valid Date object
+    const nextReviewDate = new Date(sm2Result.nextReviewDate);
+    
+
+    
     const updatedData = {
       timesSeen: userProgress.timesSeen + 1,
       lastSeen: new Date(),
@@ -111,7 +151,7 @@ export async function POST(request: Request) {
       easinessFactor: sm2Result.easinessFactor,
       interval: sm2Result.interval,
       repetition: sm2Result.repetition,
-      nextReviewDate: sm2Result.nextReviewDate,
+      nextReviewDate: nextReviewDate,
       quality: sm2Result.quality,
       isManuallyLearned: sm2Result.isLearned,
     };
@@ -124,8 +164,10 @@ export async function POST(request: Request) {
         },
         data: updatedData,
       });
+
     } catch (error: unknown) {
       const dbError = error as { code?: string };
+      console.error('Database update error:', dbError);
       if (dbError.code === 'P1017' || dbError.code === 'P1001' || dbError.code === 'P1008') {
         // Retry once for connection errors
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -135,6 +177,7 @@ export async function POST(request: Request) {
           },
           data: updatedData,
         });
+
       } else {
         throw error;
       }
@@ -144,15 +187,7 @@ export async function POST(request: Request) {
 
     const wasLearned = sm2Result.isLearned && !userProgress.isManuallyLearned;
     
-    console.log('Progress update:', {
-      wordId,
-      isCorrect,
-      quality: sm2Result.quality,
-      repetition: sm2Result.repetition,
-      wasLearned,
-      previousRepetition: userProgress.repetition,
-      previousIsManuallyLearned: userProgress.isManuallyLearned
-    });
+
     
     return NextResponse.json({
       ...updatedProgress,
