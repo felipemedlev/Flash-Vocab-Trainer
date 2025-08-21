@@ -335,7 +335,7 @@ export default function Home() {
                 radius="md" 
                 withBorder
                 style={{ 
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                  background: 'linear-gradient(135deg, rgb(253, 253, 253) 0%, rgba(255,255,255,0.05) 100%)',
                   backdropFilter: 'blur(10px)',
                   border: '1px solid rgba(255,255,255,0.2)'
                 }}
@@ -345,7 +345,8 @@ export default function Home() {
                   radius={rem(30)}
                   variant="gradient"
                   gradient={{ deg: 135, from: feature.color, to: feature.color }}
-                  style={{ margin: '0 auto', marginBottom: '1rem' }}
+                  mb="md"
+                  style={{ marginLeft: 'auto', marginRight: 'auto' }}
                 >
                   <feature.icon size={rem(30)} />
                 </ThemeIcon>
