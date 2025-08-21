@@ -18,7 +18,6 @@ import {
   Button,
   Paper,
   SimpleGrid,
-  Anchor,
   Stack
 } from "@mantine/core";
 
@@ -33,7 +32,7 @@ interface Section {
 export default function SectionsPage() {
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
@@ -153,7 +152,7 @@ export default function SectionsPage() {
       {/* Motivational message */}
       {overallProgress < 100 && (
         <Alert color="blue" variant="light" mb="xl">
-          💪 You're doing great! Keep going to master Hebrew vocabulary.
+          💪 You&apos;re doing great! Keep going to master Hebrew vocabulary.
         </Alert>
       )}
 
@@ -254,7 +253,7 @@ export default function SectionsPage() {
         <Paper withBorder p="xl" radius="md" style={{ textAlign: 'center' }}>
           <Text size="xl" fw={500} mb="md">📚 No sections available yet</Text>
           <Text c="dimmed" mb="lg">
-            Sections will appear here once they're uploaded by administrators.
+            Sections will appear here once they&apos;re uploaded by administrators.
           </Text>
           <Button component={Link} href="/dashboard">
             Return to Dashboard

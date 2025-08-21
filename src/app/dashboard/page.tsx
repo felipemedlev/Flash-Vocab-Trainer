@@ -114,7 +114,7 @@ export default function DashboardPage() {
           <Group>
             {!todayStudied && (
               <Alert color="orange" variant="light">
-                📅 Haven't studied today yet!
+                📅 Haven&apos;t studied today yet!
               </Alert>
             )}
             <Badge 

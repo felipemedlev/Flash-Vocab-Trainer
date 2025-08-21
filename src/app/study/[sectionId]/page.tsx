@@ -19,7 +19,7 @@ export default function StudySetupPage() {
   const params = useParams();
   const router = useRouter();
   const sectionId = params.sectionId;
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   useEffect(() => {
     if (status === 'unauthenticated') {

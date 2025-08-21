@@ -242,7 +242,7 @@ export default function StudyContent() {
           
           {isCompleted && (
             <Alert color="green" variant="light" mt="lg">
-              🎉 Congratulations! You've completed this section. Keep reviewing to maintain your knowledge.
+              🎉 Congratulations! You&apos;ve completed this section. Keep reviewing to maintain your knowledge.
             </Alert>
           )}
         </Paper>

@@ -14,11 +14,9 @@ import {
   Alert,
   Badge,
   Group,
-  Progress,
   Stack,
   Card,
   SimpleGrid,
-  Anchor
 } from '@mantine/core';
 import Link from 'next/link';
 
@@ -125,10 +123,10 @@ export default function ProfilePage() {
 
   const getStreakMessage = (current: number, longest: number) => {
     if (current === 0) return "Start your learning streak today! 🚀";
-    if (current === longest && current >= 7) return "🔥 You're on your longest streak ever!";
-    if (current >= 30) return "🏆 Amazing dedication! You're a Hebrew master!";
+    if (current === longest && current >= 7) return "🔥 You&apos;re on your longest streak ever!";
+    if (current >= 30) return "🏆 Amazing dedication! You&apos;re a Hebrew master!";
     if (current >= 14) return "💪 Two weeks strong! Keep it up!";
-    if (current >= 7) return "🌟 One week streak! You're building great habits!";
+    if (current >= 7) return "🌟 One week streak! You&apos;re building great habits!";
     return "📈 Great start! Keep building momentum!";
   };
 
