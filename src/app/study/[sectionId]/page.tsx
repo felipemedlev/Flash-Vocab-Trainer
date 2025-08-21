@@ -11,7 +11,6 @@ import {
   Loader,
   Center,
   Alert,
-  Stack,
   Group,
   Badge,
   Progress
@@ -43,7 +42,7 @@ export default function StudySetupPage() {
       router.push('/auth/login');
       return;
     }
-  }, [status]);
+  }, [status, router]);
 
   const fetchSection = useCallback(async () => {
     if (!sectionId) {

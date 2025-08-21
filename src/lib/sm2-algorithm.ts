@@ -70,6 +70,14 @@ export function calculateSM2(input: SM2Input): SM2Result {
   // This provides faster user feedback while still using spaced repetition
   const isLearned = repetition >= 2 && quality >= 3;
   
+  console.log('SM2 calculation:', {
+    quality,
+    repetition,
+    isLearned,
+    easinessFactor,
+    interval
+  });
+  
   return {
     easinessFactor,
     interval,

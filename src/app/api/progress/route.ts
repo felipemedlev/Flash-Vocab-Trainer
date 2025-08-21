@@ -142,9 +142,21 @@ export async function POST(request: Request) {
 
 
 
+    const wasLearned = sm2Result.isLearned && !userProgress.isManuallyLearned;
+    
+    console.log('Progress update:', {
+      wordId,
+      isCorrect,
+      quality: sm2Result.quality,
+      repetition: sm2Result.repetition,
+      wasLearned,
+      previousRepetition: userProgress.repetition,
+      previousIsManuallyLearned: userProgress.isManuallyLearned
+    });
+    
     return NextResponse.json({
       ...updatedProgress,
-      wasLearned: sm2Result.isLearned && !userProgress.isManuallyLearned, // New learning in this session
+      wasLearned: wasLearned, // New learning in this session
       sm2Info: {
         quality: sm2Result.quality,
         nextReview: sm2Result.nextReviewDate,

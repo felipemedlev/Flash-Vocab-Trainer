@@ -36,6 +36,7 @@ export default function FlashcardContent() {
     wordsLearnedInSession: 0
   });
   const [wordsLearnedInSession, setWordsLearnedInSession] = useState(0);
+  const [sessionWordsLearned, setSessionWordsLearned] = useState(0);
   const [cardStartTime, setCardStartTime] = useState(Date.now());
   const [sessionWordAttempts, setSessionWordAttempts] = useState<Record<number, number>>({});
   const [preloadedCardIndex, setPreloadedCardIndex] = useState<number | null>(null);
@@ -150,11 +151,10 @@ export default function FlashcardContent() {
             console.error("Failed to update progress:", await response.text());
           } else {
             const progressData = await response.json();
+            console.log('Progress update result:', progressData);
             if (progressData.wasLearned) {
-              setSessionStats(prev => ({
-                ...prev,
-                wordsLearnedInSession: prev.wordsLearnedInSession + 1
-              }));
+              console.log('Word learned!', progressData);
+              setSessionWordsLearned(prev => prev + 1);
             }
           }
         } catch (e) {
@@ -238,8 +238,10 @@ export default function FlashcardContent() {
         const finalTotalAnswers = sessionStats.totalAnswers + 1;
         
         // Wait for any remaining progress updates to complete
+        let finalWordsLearned = sessionWordsLearned;
+        
         if (progressQueue.length > 0) {
-          // Process remaining queue items
+          // Process remaining queue items synchronously
           for (const progressUpdate of progressQueue) {
             try {
               const response = await fetch("/api/progress", {
@@ -252,11 +254,10 @@ export default function FlashcardContent() {
 
               if (response.ok) {
                 const progressData = await response.json();
+                console.log('Final progress update result:', progressData);
                 if (progressData.wasLearned) {
-                  setSessionStats(prev => ({
-                    ...prev,
-                    wordsLearnedInSession: prev.wordsLearnedInSession + 1
-                  }));
+                  console.log('Final word learned!', progressData);
+                  finalWordsLearned += 1;
                 }
               }
             } catch (e) {
@@ -266,9 +267,6 @@ export default function FlashcardContent() {
           // Clear the queue
           setProgressQueue([]);
         }
-        
-        // Get the final words learned count after processing all updates
-        const finalWordsLearned = sessionStats.wordsLearnedInSession;
         
         const params = new URLSearchParams({
           sectionId: sectionId || '',
