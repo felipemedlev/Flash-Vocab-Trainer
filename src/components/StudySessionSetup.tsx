@@ -18,8 +18,6 @@ interface StudySessionSetupProps {
 
 export default function StudySessionSetup({ sectionId }: StudySessionSetupProps) {
   const [sessionLength, setSessionLength] = useState('10');
-  const [focusMode, setFocusMode] = useState('all');
-  const [studyMode, setStudyMode] = useState('flashcard');
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
 
@@ -30,7 +28,7 @@ export default function StudySessionSetup({ sectionId }: StudySessionSetupProps)
     // Validate session length to prevent performance issues
     const validatedLength = Math.min(parseInt(sessionLength), 100);
     
-    const sessionUrl = `/study/flashcard?sectionId=${sectionId}&length=${validatedLength}&mode=${focusMode}`;
+    const sessionUrl = `/study/flashcard?sectionId=${sectionId}&length=${validatedLength}`;
     console.log('Navigating to:', sessionUrl);
     router.push(sessionUrl);
   };
@@ -38,111 +36,52 @@ export default function StudySessionSetup({ sectionId }: StudySessionSetupProps)
   return (
     <Stack gap="lg">
       <Text size="xl" fw={700} ta="center" mb="md" style={{ color: '#1f2937' }}>
-        🚀 Study Session Setup
+        🚀 Start Your Study Session
       </Text>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
-        <Paper 
-          shadow="sm" 
-          p="lg" 
-          radius="md" 
-          withBorder
-          style={{ 
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 197, 253, 0.05))',
-            border: '1px solid rgba(59, 130, 246, 0.1)'
+      <Paper 
+        shadow="sm" 
+        p="xl" 
+        radius="md" 
+        withBorder
+        style={{ 
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 197, 253, 0.05))',
+          border: '1px solid rgba(59, 130, 246, 0.1)',
+          maxWidth: '400px',
+          margin: '0 auto',
+          textAlign: 'center'
+        }}
+      >
+        <Text fw={600} mb="lg" style={{ color: '#1f2937' }}>📊 How many words would you like to study?</Text>
+        <Select
+          value={sessionLength}
+          onChange={(value) => setSessionLength(value || '10')}
+          data={[
+            { value: '5', label: '5 Words (Quick Review)' },
+            { value: '10', label: '10 Words (Recommended)' },
+            { value: '20', label: '20 Words (Extended)' },
+            { value: '50', label: '50 Words (Marathon)' },
+          ]}
+          size="lg"
+          searchable={false}
+          styles={{
+            input: {
+              background: 'rgba(255, 255, 255, 0.9)',
+              border: '2px solid rgba(59, 130, 246, 0.3)',
+              fontSize: '16px',
+              textAlign: 'center'
+            }
           }}
-        >
-          <Text fw={600} mb="sm" style={{ color: '#1f2937' }}>📊 Session Length</Text>
-          <Select
-            value={sessionLength}
-            onChange={(value) => setSessionLength(value || '10')}
-            data={[
-              { value: '5', label: '5 Words (Quick Review)' },
-              { value: '10', label: '10 Words (Recommended)' },
-              { value: '20', label: '20 Words (Extended)' },
-              { value: '50', label: '50 Words (Marathon)' },
-            ]}
-            size="md"
-            styles={{
-              input: {
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(59, 130, 246, 0.2)'
-              }
-            }}
-          />
-          <Text size="sm" c="dimmed" mt="xs">
-            ⏱️ Estimated time: ~{Math.ceil(parseInt(sessionLength) / 10)} minutes
+        />
+        <Text size="sm" c="dimmed" mt="md">
+          ⏱️ Estimated time: ~{Math.ceil(parseInt(sessionLength) / 10)} minutes
+        </Text>
+        {parseInt(sessionLength) > 50 && (
+          <Text size="xs" c="orange" mt="xs">
+            ⚠️ Large sessions may take longer to load
           </Text>
-          {parseInt(sessionLength) > 50 && (
-            <Text size="xs" c="orange" mt="xs">
-              ⚠️ Large sessions may take longer to load
-            </Text>
-          )}
-        </Paper>
-
-        <Paper 
-          shadow="sm" 
-          p="lg" 
-          radius="md" 
-          withBorder
-          style={{ 
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(52, 211, 153, 0.05))',
-            border: '1px solid rgba(16, 185, 129, 0.1)'
-          }}
-        >
-          <Text fw={600} mb="sm" style={{ color: '#1f2937' }}>🎯 Focus Mode</Text>
-          <Select
-            value={focusMode}
-            onChange={(value) => setFocusMode(value || 'all')}
-            data={[
-              { value: 'all', label: '🔄 Mix of all words' },
-              { value: 'difficult', label: '🔥 Focus on difficult words' },
-            ]}
-            size="md"
-            styles={{
-              input: {
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(16, 185, 129, 0.2)'
-              }
-            }}
-          />
-          <Text size="sm" c="dimmed" mt="xs">
-            Choose your learning strategy
-          </Text>
-        </Paper>
-
-        <Paper 
-          shadow="sm" 
-          p="lg" 
-          radius="md" 
-          withBorder
-          style={{ 
-            background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(167, 139, 250, 0.05))',
-            border: '1px solid rgba(139, 92, 246, 0.1)'
-          }}
-        >
-          <Text fw={600} mb="sm" style={{ color: '#1f2937' }}>🎮 Study Mode</Text>
-          <Select
-            value={studyMode}
-            onChange={(value) => setStudyMode(value || 'flashcard')}
-            data={[
-              { value: 'flashcard', label: '📚 Classic Flashcards' },
-              { value: 'quiz', label: '❓ Multiple Choice Quiz' },
-              { value: 'typing', label: '⌨️ Typing Practice' },
-            ]}
-            size="md"
-            styles={{
-              input: {
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(139, 92, 246, 0.2)'
-              }
-            }}
-          />
-          <Text size="sm" c="dimmed" mt="xs">
-            Pick your preferred method
-          </Text>
-        </Paper>
-      </div>
+        )}
+      </Paper>
 
       <Group justify="center" mt="xl">
         <Button

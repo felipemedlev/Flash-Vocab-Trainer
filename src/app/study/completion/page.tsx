@@ -60,7 +60,7 @@ function SessionCompletionContent() {
     if (status === 'unauthenticated') {
       router.push('/auth/login');
     }
-  }, [status, router]);
+  }, [status]);
 
   useEffect(() => {
     const recordSession = async () => {
@@ -327,7 +327,7 @@ function SessionCompletionContent() {
         <Button
           size="lg"
           leftSection={<IconRefresh size={20} />}
-          onClick={() => router.push(`/study?sectionId=${sectionId}`)}
+          onClick={() => router.push(`/study/${sectionId}`)}
           style={{ 
             background: 'linear-gradient(135deg, #11998e, #38ef7d)',
           }}

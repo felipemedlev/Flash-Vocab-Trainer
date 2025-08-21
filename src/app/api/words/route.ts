@@ -12,7 +12,6 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const sectionId = searchParams.get('sectionId');
   const length = searchParams.get('length');
-  const mode = searchParams.get('mode') || searchParams.get('focus'); // 'all' or 'difficult'
   const simple = searchParams.get('simple') === 'true'; // New parameter for simple word fetching
 
   // Validate and sanitize length parameter to prevent performance issues
@@ -142,66 +141,103 @@ export async function GET(request: Request) {
       return { ...word, progress };
     });
 
-    let wordsToStudy = [];
-
-    if (mode === 'difficult') {
-      // Focus on words that are overdue or have low performance
-      wordsToStudy = wordsWithLearningData
-        .filter(word => {
-          const progress = word.progress;
-          const isOverdue = shouldReviewWord(progress.nextReviewDate);
-          const hasLowPerformance = progress.easinessFactor < 2.0 || progress.incorrectCount > progress.correctCount;
-          const isNotMastered = progress.repetition < 3;
-          
-          return isOverdue || hasLowPerformance || isNotMastered;
-        })
-        .sort((a, b) => {
-          // Sort by urgency: overdue first, then by difficulty (low easiness factor)
-          const aOverdue = shouldReviewWord(a.progress.nextReviewDate);
-          const bOverdue = shouldReviewWord(b.progress.nextReviewDate);
-          
-          if (aOverdue && !bOverdue) return -1;
-          if (!aOverdue && bOverdue) return 1;
-          
-          // Both overdue or both not overdue, sort by easiness factor (harder words first)
-          return a.progress.easinessFactor - b.progress.easinessFactor;
-        });
-    } else { // 'all' mode or default - use SM-2 intelligent scheduling
-      // Get words for review using SM-2 algorithm
-      const wordsForSM2 = wordsWithLearningData.map(word => ({
-        id: word.id,
-        nextReviewDate: word.progress.nextReviewDate,
-        repetition: word.progress.repetition,
-        easinessFactor: word.progress.easinessFactor,
-        interval: word.progress.interval,
-        word: word
-      }));
-      
-      const prioritizedWords = getWordsForReview(wordsForSM2, validatedLength);
-      
-      // Convert back to word format and add some new words if needed
-      const reviewWords = prioritizedWords.map(item => 
-        wordsForSM2.find(w => w.id === item.id)?.word
-      ).filter(Boolean);
-      
-      // Add new words (never studied) if we have room
-      const newWords = wordsWithLearningData
-        .filter(word => word.progress.timesSeen === 0)
-        .sort(() => 0.5 - Math.random())
-        .slice(0, Math.max(0, validatedLength - reviewWords.length));
-      
-      wordsToStudy = [...reviewWords, ...newWords];
-    }
+    // Simple word selection: mix of review words and new words
+    const wordsForSM2 = wordsWithLearningData.map(word => ({
+      id: word.id,
+      nextReviewDate: word.progress.nextReviewDate,
+      repetition: word.progress.repetition,
+      easinessFactor: word.progress.easinessFactor,
+      interval: word.progress.interval,
+      word: word
+    }));
+    
+    const prioritizedWords = getWordsForReview(wordsForSM2, validatedLength);
+    
+    // Convert back to word format and add some new words if needed
+    const reviewWords = prioritizedWords.map(item => 
+      wordsForSM2.find(w => w.id === item.id)?.word
+    ).filter(Boolean);
+    
+    // Add new words (never studied) if we have room
+    const newWords = wordsWithLearningData
+      .filter(word => word.progress.timesSeen === 0)
+      .sort(() => 0.5 - Math.random())
+      .slice(0, Math.max(0, validatedLength - reviewWords.length));
+    
+    const wordsToStudy = [...reviewWords, ...newWords];
 
     // Apply session length limit
-    wordsToStudy = wordsToStudy.slice(0, validatedLength);
+    const finalWordsToStudy = wordsToStudy.slice(0, validatedLength);
 
     // Ensure we have words to study after filtering/slicing
-    if (wordsToStudy.length === 0 && sectionWordsWithProgress.length > 0) {
-      // Fallback: if no "difficult" words or selected length is too small, just pick random words
-      wordsToStudy = sectionWordsWithProgress.sort(() => 0.5 - Math.random()).slice(0, validatedLength);
-    } else if (wordsToStudy.length === 0) {
-      return NextResponse.json({ message: 'No words to study based on criteria' }, { status: 404 });
+    if (finalWordsToStudy.length === 0 && sectionWordsWithProgress.length > 0) {
+      // Fallback: if no words selected, just pick random words
+      const fallbackWords = sectionWordsWithProgress.sort(() => 0.5 - Math.random()).slice(0, validatedLength);
+      
+      // Get English translations for fallback
+      const fallbackEnglishTranslations = await retryOperation(() => 
+        prisma.word.findMany({
+          where: {
+            sectionId: parseInt(sectionId),
+          },
+          select: {
+            englishTranslation: true,
+          },
+        })
+      );
+      const fallbackUniqueTranslations = Array.from(new Set(fallbackEnglishTranslations.map(w => w.englishTranslation)));
+      
+      const fallbackFlashcards = fallbackWords.map(word => {
+        const correctTranslation = word.englishTranslation;
+        const incorrectOptions = fallbackUniqueTranslations
+          .filter(t => t !== correctTranslation)
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 3);
+
+        const options = [...incorrectOptions, correctTranslation].sort(() => 0.5 - Math.random());
+
+        let level: 'new' | 'learning' | 'review' | 'mastered' = 'new';
+        const progress = word.progress[0] || {
+          correctCount: 0,
+          incorrectCount: 0,
+          consecutiveCorrect: 0,
+          timesSeen: 0,
+          isManuallyLearned: false,
+          easinessFactor: 2.5,
+          interval: 1,
+          repetition: 0,
+          nextReviewDate: new Date(),
+          quality: null,
+        };
+        
+        if (progress.timesSeen === 0) {
+          level = 'new';
+        } else if (progress.repetition < 3) {
+          level = 'learning';
+        } else if (shouldReviewWord(progress.nextReviewDate)) {
+          level = 'review';
+        } else {
+          level = 'mastered';
+        }
+
+        return {
+          wordId: word.id,
+          hebrewText: word.hebrewText,
+          correctTranslation: correctTranslation,
+          options: options,
+          level: level,
+          sm2Data: {
+            easinessFactor: progress.easinessFactor,
+            interval: progress.interval,
+            repetition: progress.repetition,
+            nextReviewDate: progress.nextReviewDate
+          }
+        };
+      });
+      
+      return NextResponse.json(fallbackFlashcards);
+    } else if (finalWordsToStudy.length === 0) {
+      return NextResponse.json({ message: 'No words to study in this section' }, { status: 404 });
     }
 
     // Optimize: Only fetch English translations from the current section, not all words
@@ -217,7 +253,7 @@ export async function GET(request: Request) {
     );
     const uniqueEnglishTranslations = Array.from(new Set(sectionEnglishTranslations.map(w => w.englishTranslation)));
 
-    const flashcards = wordsToStudy.map(word => {
+    const flashcards = finalWordsToStudy.map(word => {
       const correctTranslation = word.englishTranslation;
       const incorrectOptions = uniqueEnglishTranslations
         .filter(t => t !== correctTranslation)
@@ -228,7 +264,18 @@ export async function GET(request: Request) {
 
       // Determine word level based on SM-2 data
       let level: 'new' | 'learning' | 'review' | 'mastered' = 'new';
-      const progress = word.progress;
+      const progress = word.progress[0] || {
+        correctCount: 0,
+        incorrectCount: 0,
+        consecutiveCorrect: 0,
+        timesSeen: 0,
+        isManuallyLearned: false,
+        easinessFactor: 2.5,
+        interval: 1,
+        repetition: 0,
+        nextReviewDate: new Date(),
+        quality: null,
+      };
       
       if (progress.timesSeen === 0) {
         level = 'new';

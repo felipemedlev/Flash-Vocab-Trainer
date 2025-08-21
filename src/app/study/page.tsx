@@ -3,7 +3,6 @@
 import { Suspense, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import StudyContent from './StudyContent';
 import { Container, Button, Paper, Text, Title } from '@mantine/core';
 import Link from 'next/link';
 
@@ -54,7 +53,23 @@ function StudyPageContent() {
     return null; // Will redirect in useEffect
   }
 
-  return <StudyContent />;
+  // Handle redirect when sectionId is provided
+  useEffect(() => {
+    if (sectionId && status === 'authenticated') {
+      router.replace(`/study/${sectionId}`);
+    }
+  }, [sectionId, status, router]);
+
+  // Show loading while redirecting
+  if (sectionId && status === 'authenticated') {
+    return (
+      <Container style={{ textAlign: 'center', marginTop: '20vh' }}>
+        <Text>Redirecting to study session...</Text>
+      </Container>
+    );
+  }
+
+  return null;
 }
 
 export default function StudySetupPage() {

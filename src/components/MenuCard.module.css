@@ -1,0 +1,49 @@
+.card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: var(--mantine-radius-md);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--mantine-shadow-lg);
+  }
+}
+
+.paper {
+  transition: background-color 0.2s ease;
+  background-color: var(--mantine-color-body);
+
+  .card:hover & {
+    background-color: var(--mantine-color-gray-0);
+  }
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--mantine-color-blue-0);
+  color: var(--mantine-color-blue-6);
+}
+
+.title {
+  color: var(--mantine-color-black);
+}
+
+.description {
+  line-height: 1.5;
+}
+
+.chevron {
+  color: var(--mantine-color-gray-5);
+  transition: transform 0.2s ease;
+
+  .card:hover & {
+    transform: translateX(5px);
+  }
+}

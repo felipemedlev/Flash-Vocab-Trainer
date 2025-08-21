@@ -21,30 +21,38 @@ export async function GET(
   }
 
   try {
-    console.log('Sections API called for sectionId:', sectionId, 'userId:', session.user.id);
-    
-    // Check if section exists at all first
-    const allSections = await db.section.findMany({
-      select: { id: true, name: true, isDefault: true, createdByUserId: true }
-    });
-    console.log('All sections in database:', allSections);
-    
+    const numericSectionId = parseInt(sectionId, 10);
+    if (isNaN(numericSectionId)) {
+      return NextResponse.json({ message: 'Invalid section ID' }, { status: 400 });
+    }
+
     // First get basic section info
     const section = await db.section.findFirst({
-      where: { 
-        id: parseInt(sectionId),
-        OR: [
-          { createdByUserId: parseInt(session.user.id) },
-          { isDefault: true }
-        ]
+      where: {
+        AND: [
+          { id: numericSectionId },
+          {
+            OR: [
+              { createdByUserId: parseInt(session.user.id) },
+              { isDefault: true },
+            ],
+          },
+        ],
       },
     });
-
-    console.log('Found section:', section);
     
     if (!section) {
-      return NextResponse.json({ 
-        message: "Section not found", 
+      const allSections = await db.section.findMany({
+        select: { id: true, name: true, isDefault: true },
+        where: {
+          OR: [
+            { createdByUserId: parseInt(session.user.id) },
+            { isDefault: true },
+          ],
+        }
+      });
+      return NextResponse.json({
+        message: "Section not found",
         requestedId: sectionId,
         availableSections: allSections.map(s => ({ id: s.id, name: s.name, isDefault: s.isDefault }))
       }, { status: 404 });

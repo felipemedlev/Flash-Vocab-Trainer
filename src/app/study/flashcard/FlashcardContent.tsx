@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Text } from "@mantine/core";
@@ -20,7 +20,6 @@ export default function FlashcardContent() {
   const searchParams = useSearchParams();
   const sectionId = searchParams.get("sectionId");
   const sessionLength = searchParams.get("length");
-  const studyMode = searchParams.get("mode"); // Changed from focusMode to studyMode
   const { status } = useSession();
 
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -46,6 +45,7 @@ export default function FlashcardContent() {
     sessionWordAttempts: number;
     timestamp: number;
   }>>([]);
+  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -54,22 +54,32 @@ export default function FlashcardContent() {
   }, [status, router]);
 
   const fetchFlashcards = useCallback(async () => {
-    if (!sectionId || !sessionLength || !studyMode) { // Changed focusMode to studyMode
-      setError("Missing study parameters.");
+    if (!sectionId) {
+      setError("Missing section ID.");
       setLoading(false);
       return;
     }
+    
+    // Prevent multiple fetches
+    if (hasFetchedRef.current) {
+      return;
+    }
+    
+    // Provide default values for missing parameters
+    const defaultLength = 10;
+    const actualLength = sessionLength || defaultLength.toString();
     if (status === "authenticated") {
       try {
+        hasFetchedRef.current = true;
         // Validate and limit session length to prevent performance issues
-        const validatedLength = Math.min(parseInt(sessionLength), 100);
+        const validatedLength = Math.min(parseInt(actualLength), 100);
         
         // Add timeout to prevent hanging requests
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
         
         const response = await fetch(
-          `/api/words?sectionId=${sectionId}&length=${validatedLength}&mode=${studyMode}`, // Changed focusMode to studyMode
+          `/api/words?sectionId=${sectionId}&length=${validatedLength}`,
           { signal: controller.signal }
         );
         
@@ -93,7 +103,7 @@ export default function FlashcardContent() {
         setLoading(false);
       }
     }
-  }, [sectionId, sessionLength, status, studyMode]);
+  }, [sectionId, sessionLength, status]);
 
   useEffect(() => {
     fetchFlashcards();
@@ -285,12 +295,22 @@ export default function FlashcardContent() {
         <Text size="sm" c="dimmed" ta="center">
           {error}
         </Text>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Try Again
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Try Again
+          </button>
+          {sectionId && (
+            <button 
+              onClick={() => router.push(`/study/${sectionId}`)} 
+              className="mt-4 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Setup Session
+            </button>
+          )}
+        </div>
       </div>
     );
   }

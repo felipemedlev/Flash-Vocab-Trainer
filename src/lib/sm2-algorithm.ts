@@ -66,8 +66,9 @@ export function calculateSM2(input: SM2Input): SM2Result {
   nextReviewDate.setDate(nextReviewDate.getDate() + interval);
   
   // Determine if word is considered "learned"
-  // A word is learned after 3 successful reviews (quality >= 3) with increasing intervals
-  const isLearned = repetition >= 3 && quality >= 3;
+  // A word is learned after 2 successful reviews (quality >= 3) with increasing intervals
+  // This provides faster user feedback while still using spaced repetition
+  const isLearned = repetition >= 2 && quality >= 3;
   
   return {
     easinessFactor,
@@ -98,17 +99,17 @@ export function mapPerformanceToQuality(
   
   // Correct responses map to 3-5 based on response time and confidence
   if (responseTime) {
-    if (responseTime < 2000) { // Very fast (< 2 seconds)
+    if (responseTime < 3000) { // Fast (< 3 seconds) - more generous
       return 5; // Perfect response
-    } else if (responseTime < 5000) { // Fast (< 5 seconds)
+    } else if (responseTime < 8000) { // Moderate (< 8 seconds) - more generous
       return 4; // Good response with slight hesitation
     } else {
       return 3; // Correct but with difficulty
     }
   }
   
-  // Default for correct responses without timing data
-  return isCorrect ? 4 : 1;
+  // Default for correct responses without timing data - more generous
+  return isCorrect ? 5 : 1;
 }
 
 /**
