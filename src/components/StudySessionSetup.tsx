@@ -10,7 +10,7 @@ import {
     Paper,
     Group
 } from '@mantine/core';
-import { IconPlayerPlay } from '@tabler/icons-react';
+import { IconPlayerPlay, IconEye } from '@tabler/icons-react';
 
 interface StudySessionSetupProps {
   sectionId: string;
@@ -30,6 +30,10 @@ export default function StudySessionSetup({ sectionId }: StudySessionSetupProps)
     
     const sessionUrl = `/study/flashcard?sectionId=${sectionId}&length=${validatedLength}`;
     router.push(sessionUrl);
+  };
+
+  const handleViewWords = () => {
+    router.push(`/sections/${sectionId}/words`);
   };
 
   return (
@@ -82,7 +86,7 @@ export default function StudySessionSetup({ sectionId }: StudySessionSetupProps)
         )}
       </Paper>
 
-      <Group justify="center" mt="xl">
+      <Group justify="center" mt="xl" gap="md">
         <Button
           leftSection={<IconPlayerPlay size={20} />}
           size="xl"
@@ -114,6 +118,33 @@ export default function StudySessionSetup({ sectionId }: StudySessionSetupProps)
           }}
         >
           {isNavigating ? 'Starting...' : '🚀 Start Session'}
+        </Button>
+        
+        <Button
+          leftSection={<IconEye size={20} />}
+          size="lg"
+          variant="outline"
+          onClick={handleViewWords}
+          style={{
+            border: '2px solid rgba(59, 130, 246, 0.3)',
+            color: '#3b82f6',
+            fontWeight: 600,
+            fontSize: '16px',
+            height: '48px',
+            paddingLeft: '1.5rem',
+            paddingRight: '1.5rem',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = '0 5px 15px rgba(59, 130, 246, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0px)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+        >
+          👁️ View All Words
         </Button>
       </Group>
     </Stack>

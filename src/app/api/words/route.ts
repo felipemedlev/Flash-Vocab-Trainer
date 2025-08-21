@@ -12,6 +12,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const sectionId = searchParams.get('sectionId');
   const length = searchParams.get('length');
+  const offset = searchParams.get('offset');
   const simple = searchParams.get('simple') === 'true'; // New parameter for simple word fetching
 
   // Validate and sanitize length parameter to prevent performance issues
@@ -20,6 +21,15 @@ export async function GET(request: Request) {
     const parsedLength = parseInt(length);
     if (!isNaN(parsedLength) && parsedLength > 0) {
       validatedLength = Math.min(parsedLength, 100); // Cap at 100 to prevent performance issues
+    }
+  }
+
+  // Validate and sanitize offset parameter
+  let validatedOffset = 0; // Default
+  if (offset) {
+    const parsedOffset = parseInt(offset);
+    if (!isNaN(parsedOffset) && parsedOffset >= 0) {
+      validatedOffset = parsedOffset;
     }
   }
 
@@ -57,12 +67,22 @@ export async function GET(request: Request) {
 
     // If simple mode is requested, return basic word data without SM-2 complexity
     if (simple) {
+      // Get total count for pagination info
+      const totalWordsCount = await retryOperation(() => 
+        prisma.word.count({
+          where: {
+            sectionId: parseInt(sectionId),
+          }
+        })
+      );
+
       const words = await retryOperation(() => 
         prisma.word.findMany({
           where: {
             sectionId: parseInt(sectionId),
           },
           take: validatedLength,
+          skip: validatedOffset,
           select: {
             id: true,
             hebrewText: true,
@@ -75,12 +95,17 @@ export async function GET(request: Request) {
         })
       );
 
-      return NextResponse.json(words.map(word => ({
-        wordId: word.id,
-        hebrewText: word.hebrewText,
-        englishTranslation: word.englishTranslation,
-        createdAt: word.createdAt
-      })));
+      return NextResponse.json({
+        words: words.map(word => ({
+          wordId: word.id,
+          hebrewText: word.hebrewText,
+          englishTranslation: word.englishTranslation,
+          createdAt: word.createdAt
+        })),
+        totalWords: totalWordsCount,
+        currentPage: Math.floor(validatedOffset / validatedLength) + 1,
+        totalPages: Math.ceil(totalWordsCount / validatedLength)
+      });
     }
 
     // Optimize: Limit the number of words fetched based on session length
