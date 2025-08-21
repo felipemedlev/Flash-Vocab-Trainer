@@ -35,6 +35,7 @@ export default function FlashcardContent() {
     startTime: Date.now(),
     wordsLearnedInSession: 0
   });
+  const [wordsLearnedInSession, setWordsLearnedInSession] = useState(0);
   const [cardStartTime, setCardStartTime] = useState(Date.now());
   const [sessionWordAttempts, setSessionWordAttempts] = useState<Record<number, number>>({});
   const [preloadedCardIndex, setPreloadedCardIndex] = useState<number | null>(null);
@@ -224,17 +225,49 @@ export default function FlashcardContent() {
     }]);
 
     // Move to the next card after a shorter delay for better UX
-    setTimeout(() => {
+    setTimeout(async () => {
       setShowFeedback(false);
       setSelectedOption(null);
       if (currentCardIndex < flashcards.length - 1) {
         setCurrentCardIndex(currentCardIndex + 1);
         setCardStartTime(Date.now()); // Start timing the next card
       } else {
-        // End of session - redirect to completion page with stats
+        // End of session - wait for all progress updates to complete before redirecting
         const sessionLength = Math.round((Date.now() - sessionStats.startTime) / 1000 / 60); // minutes
         const finalCorrectAnswers = sessionStats.correctAnswers + (correct ? 1 : 0);
         const finalTotalAnswers = sessionStats.totalAnswers + 1;
+        
+        // Wait for any remaining progress updates to complete
+        if (progressQueue.length > 0) {
+          // Process remaining queue items
+          for (const progressUpdate of progressQueue) {
+            try {
+              const response = await fetch("/api/progress", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(progressUpdate),
+              });
+
+              if (response.ok) {
+                const progressData = await response.json();
+                if (progressData.wasLearned) {
+                  setSessionStats(prev => ({
+                    ...prev,
+                    wordsLearnedInSession: prev.wordsLearnedInSession + 1
+                  }));
+                }
+              }
+            } catch (e) {
+              console.error("Error updating final progress:", e);
+            }
+          }
+          // Clear the queue
+          setProgressQueue([]);
+        }
+        
+        // Get the final words learned count after processing all updates
         const finalWordsLearned = sessionStats.wordsLearnedInSession;
         
         const params = new URLSearchParams({
@@ -248,7 +281,7 @@ export default function FlashcardContent() {
         router.push(`/study/completion?${params.toString()}`);
       }
     }, 1000); // Reduced to 1 second delay for faster card transitions
-  }, [showFeedback, flashcards, currentCardIndex, cardStartTime, sessionWordAttempts, sessionStats, sectionId, router]);
+  }, [showFeedback, flashcards, currentCardIndex, cardStartTime, sessionWordAttempts, sessionStats, sectionId, router, progressQueue]);
 
   // Keyboard shortcuts
   useEffect(() => {
