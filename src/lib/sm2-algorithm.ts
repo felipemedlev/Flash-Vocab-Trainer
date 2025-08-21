@@ -126,8 +126,7 @@ export function mapPerformanceToQuality(
  * Determine if a word should be shown based on its next review date
  */
 export function shouldReviewWord(nextReviewDate: Date): boolean {
-  const now = new Date();
-  return now >= nextReviewDate;
+  return new Date() >= nextReviewDate;
 }
 
 /**

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { Text, Button, Card, Group } from '@mantine/core';
 
@@ -19,13 +19,24 @@ interface WordProgress {
   incorrectCount: number;
 }
 
+interface WordData {
+  wordId: number;
+  hebrewText: string;
+  englishTranslation: string;
+}
+
+interface TestResult {
+  message: string;
+  data?: unknown;
+}
+
 export default function DebugLearningPage() {
   const { data: session, status } = useSession();
   const [words, setWords] = useState<WordProgress[]>([]);
   const [loading, setLoading] = useState(false);
-  const [testResult, setTestResult] = useState<any>(null);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
 
-  const fetchWords = async () => {
+  const fetchWords = useCallback(async () => {
     if (!session?.user?.id) return;
     
     setLoading(true);
@@ -36,7 +47,7 @@ export default function DebugLearningPage() {
         
         // Get progress for each word
         const wordsWithProgress = await Promise.all(
-          wordData.map(async (word: any) => {
+          wordData.map(async (word: WordData) => {
             const progressResponse = await fetch(`/api/progress?wordId=${word.wordId}`);
             if (progressResponse.ok) {
               const progress = await progressResponse.json();
@@ -71,7 +82,7 @@ export default function DebugLearningPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.user?.id]);
 
   const testSM2 = async (wordId: number) => {
     try {
@@ -101,7 +112,7 @@ export default function DebugLearningPage() {
       });
       
       if (response.ok) {
-        const result = await response.json();
+        await response.json();
         // Refresh the words list
         await fetchWords();
       }
@@ -114,7 +125,7 @@ export default function DebugLearningPage() {
     if (status === 'authenticated') {
       fetchWords();
     }
-  }, [status, session]);
+  }, [status, fetchWords]);
 
   if (status === 'loading') {
     return <div>Loading...</div>;
