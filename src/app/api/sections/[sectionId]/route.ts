@@ -21,6 +21,15 @@ export async function GET(
   }
 
   try {
+    console.log('Sections API called for sectionId:', sectionId, 'userId:', session.user.id);
+    
+    // Check if section exists at all first
+    const allSections = await db.section.findMany({
+      select: { id: true, name: true, isDefault: true, createdByUserId: true }
+    });
+    console.log('All sections in database:', allSections);
+    
+    // First get basic section info
     const section = await db.section.findFirst({
       where: { 
         id: parseInt(sectionId),
@@ -29,29 +38,31 @@ export async function GET(
           { isDefault: true }
         ]
       },
-      include: {
-        words: {
-          include: {
-            progress: {
-              where: {
-                userId: parseInt(session.user.id),
-              },
-              take: 1,
-            },
-          },
-        }
-      }
     });
 
+    console.log('Found section:', section);
+    
     if (!section) {
-      return NextResponse.json({ message: "Section not found" }, { status: 404 });
+      return NextResponse.json({ 
+        message: "Section not found", 
+        requestedId: sectionId,
+        availableSections: allSections.map(s => ({ id: s.id, name: s.name, isDefault: s.isDefault }))
+      }, { status: 404 });
     }
 
-    // Calculate progress
-    const totalWords = section.words.length;
-    const learnedWords = section.words.filter(word => 
-      word.progress.some(p => p.isManuallyLearned)
-    ).length;
+    // Get word count and progress separately for better performance
+    const [totalWords, learnedWords] = await Promise.all([
+      db.word.count({
+        where: { sectionId: parseInt(sectionId) }
+      }),
+      db.userProgress.count({
+        where: {
+          word: { sectionId: parseInt(sectionId) },
+          userId: parseInt(session.user.id),
+          isManuallyLearned: true
+        }
+      })
+    ]);
 
     const sectionWithProgress = {
       id: section.id,
@@ -60,7 +71,6 @@ export async function GET(
       isDefault: section.isDefault,
       createdByUserId: section.createdByUserId,
       createdAt: section.createdAt,
-      words: section.words,
       totalWords,
       learnedWords,
     };

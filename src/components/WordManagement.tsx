@@ -54,8 +54,8 @@ export default function WordManagement({ sectionId, onWordsChange }: WordManagem
       setLoading(true);
       setError(null);
       
-      // Fetch all words for the section (we'll implement pagination on the frontend for now)
-      const response = await fetch(`/api/words?sectionId=${sectionId}&length=1000&mode=all`);
+      // Fetch words for the section with simple mode for better performance
+      const response = await fetch(`/api/words?sectionId=${sectionId}&length=100&simple=true`);
       if (!response.ok) {
         throw new Error('Failed to fetch words');
       }

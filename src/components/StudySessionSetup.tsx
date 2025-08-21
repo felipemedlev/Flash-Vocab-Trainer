@@ -30,7 +30,8 @@ export default function StudySessionSetup({ sectionId }: StudySessionSetupProps)
     // Validate session length to prevent performance issues
     const validatedLength = Math.min(parseInt(sessionLength), 100);
     
-    const sessionUrl = `/study/flashcard?sectionId=${sectionId}&length=${validatedLength}&focus=${focusMode}&mode=${studyMode}`;
+    const sessionUrl = `/study/flashcard?sectionId=${sectionId}&length=${validatedLength}&mode=${focusMode}`;
+    console.log('Navigating to:', sessionUrl);
     router.push(sessionUrl);
   };
 

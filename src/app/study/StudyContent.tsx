@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import {
@@ -44,6 +44,7 @@ export default function StudyContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string | null>('study');
+  const fetchingRef = useRef(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -51,34 +52,39 @@ export default function StudyContent() {
     }
   }, [status, router]);
 
-  useEffect(() => {
-    const fetchSectionDetails = async () => {
-      if (!sectionId) {
-        router.push('/sections');
-        return;
-      }
-      if (status === 'authenticated') {
-        try {
-          const response = await fetch(`/api/sections/${sectionId}`);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-          setSectionData(data);
-        } catch (e: unknown) {
-          setError(e instanceof Error ? e.message : 'An unknown error occurred');
-        } finally {
-          setLoading(false);
+  const fetchSectionDetails = useCallback(async () => {
+    if (!sectionId) {
+      router.push('/sections');
+      return;
+    }
+    if (status === 'authenticated' && !fetchingRef.current) {
+      try {
+        fetchingRef.current = true;
+        setLoading(true);
+        const response = await fetch(`/api/sections/${sectionId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+        setSectionData(data);
+      } catch (e: unknown) {
+        console.error('Error fetching section:', e);
+        setError(e instanceof Error ? e.message : 'An unknown error occurred');
+      } finally {
+        setLoading(false);
+        fetchingRef.current = false;
       }
-    };
-    
-    if (status !== 'loading') {
-      fetchSectionDetails();
     }
   }, [sectionId, status, router]);
 
+  useEffect(() => {
+    if (status !== 'loading' && !sectionData) {
+      fetchSectionDetails();
+    }
+  }, [sectionId, status, fetchSectionDetails]);
+
   if (status === 'loading' || loading) {
+    console.log('Showing loading state');
     return (
       <Center h="100vh">
         <Loader size="lg" />
@@ -101,6 +107,7 @@ export default function StudyContent() {
   }
 
   if (!sectionData) {
+    console.log('No section data available');
     return (
       <Center h="100vh">
         <Alert icon={<IconInfoCircle size={16} />} color="red">
@@ -109,6 +116,8 @@ export default function StudyContent() {
       </Center>
     );
   }
+
+  // console.log('Rendering main content with section data:', sectionData);
 
   const progressPercentage = sectionData.totalWords > 0 ? (sectionData.learnedWords / sectionData.totalWords) * 100 : 0;
   const wordsLeft = sectionData.totalWords - sectionData.learnedWords;
@@ -255,45 +264,35 @@ export default function StudyContent() {
           </Tabs.List>
 
           <div style={{ padding: '1.5rem' }}>
-            <Tabs.Panel value="study">
-              <StudySessionSetup sectionId={sectionId as string} />
-            </Tabs.Panel>
+            {activeTab === 'study' && (
+              <Tabs.Panel value="study">
+                <StudySessionSetup sectionId={sectionId as string} />
+              </Tabs.Panel>
+            )}
 
-            <Tabs.Panel value="add">
-              <WordInput 
-                sectionId={sectionId as string} 
-                onWordsSaved={async () => {
-                  // Refresh section data without page reload
-                  try {
-                    const response = await fetch(`/api/sections/${sectionId}`);
-                    if (response.ok) {
-                      const data = await response.json();
-                      setSectionData(data);
-                    }
-                  } catch (error) {
-                    console.error('Failed to refresh section data:', error);
-                  }
-                }} 
-              />
-            </Tabs.Panel>
+            {activeTab === 'add' && (
+              <Tabs.Panel value="add">
+                <WordInput 
+                  sectionId={sectionId as string} 
+                  onWordsSaved={() => {
+                    // Refresh section data without page reload
+                    fetchSectionDetails();
+                  }} 
+                />
+              </Tabs.Panel>
+            )}
 
-            <Tabs.Panel value="manage">
-              <WordManagement 
-                sectionId={sectionId as string}
-                onWordsChange={async () => {
-                  // Refresh section data without page reload
-                  try {
-                    const response = await fetch(`/api/sections/${sectionId}`);
-                    if (response.ok) {
-                      const data = await response.json();
-                      setSectionData(data);
-                    }
-                  } catch (error) {
-                    console.error('Failed to refresh section data:', error);
-                  }
-                }}
-              />
-            </Tabs.Panel>
+            {activeTab === 'manage' && (
+              <Tabs.Panel value="manage">
+                <WordManagement 
+                  sectionId={sectionId as string}
+                  onWordsChange={() => {
+                    // Refresh section data without page reload
+                    fetchSectionDetails();
+                  }}
+                />
+              </Tabs.Panel>
+            )}
           </div>
         </Tabs>
       </Paper>

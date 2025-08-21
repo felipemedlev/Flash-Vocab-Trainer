@@ -13,6 +13,7 @@ export async function GET(request: Request) {
   const sectionId = searchParams.get('sectionId');
   const length = searchParams.get('length');
   const mode = searchParams.get('mode') || searchParams.get('focus'); // 'all' or 'difficult'
+  const simple = searchParams.get('simple') === 'true'; // New parameter for simple word fetching
 
   // Validate and sanitize length parameter to prevent performance issues
   let validatedLength = 20; // Default
@@ -54,6 +55,34 @@ export async function GET(request: Request) {
       }
       throw new Error('Max retries exceeded');
     };
+
+    // If simple mode is requested, return basic word data without SM-2 complexity
+    if (simple) {
+      const words = await retryOperation(() => 
+        prisma.word.findMany({
+          where: {
+            sectionId: parseInt(sectionId),
+          },
+          take: validatedLength,
+          select: {
+            id: true,
+            hebrewText: true,
+            englishTranslation: true,
+            createdAt: true,
+          },
+          orderBy: {
+            id: 'asc'
+          }
+        })
+      );
+
+      return NextResponse.json(words.map(word => ({
+        wordId: word.id,
+        hebrewText: word.hebrewText,
+        englishTranslation: word.englishTranslation,
+        createdAt: word.createdAt
+      })));
+    }
 
     // Optimize: Limit the number of words fetched based on session length
     const maxWordsToFetch = validatedLength; // Use validated length
