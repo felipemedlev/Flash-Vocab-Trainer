@@ -172,3 +172,105 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function POST(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const { sectionId, words } = await request.json();
+
+    if (!sectionId || !Array.isArray(words) || words.length === 0) {
+      return NextResponse.json(
+        { message: 'Section ID and words array are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate that the section exists and user has access to it
+    const section = await prisma.section.findFirst({
+      where: {
+        id: parseInt(sectionId),
+        OR: [
+          { createdByUserId: parseInt(session.user.id) },
+          { isDefault: true }
+        ]
+      }
+    });
+
+    if (!section) {
+      return NextResponse.json(
+        { message: 'Section not found or access denied' },
+        { status: 404 }
+      );
+    }
+
+    // Validate and filter words
+    const validWords = words.filter(word => 
+      word.hebrewText && 
+      word.englishTranslation && 
+      word.hebrewText.trim() !== '' && 
+      word.englishTranslation.trim() !== ''
+    ).map(word => ({
+      sectionId: parseInt(sectionId),
+      hebrewText: word.hebrewText.trim(),
+      englishTranslation: word.englishTranslation.trim()
+    }));
+
+    if (validWords.length === 0) {
+      return NextResponse.json(
+        { message: 'No valid words provided' },
+        { status: 400 }
+      );
+    }
+
+    // Check for duplicates within the section
+    const existingWords = await prisma.word.findMany({
+      where: {
+        sectionId: parseInt(sectionId),
+        OR: validWords.map(word => ({
+          AND: [
+            { hebrewText: word.hebrewText },
+            { englishTranslation: word.englishTranslation }
+          ]
+        }))
+      }
+    });
+
+    const existingWordKeys = new Set(
+      existingWords.map(w => `${w.hebrewText}|${w.englishTranslation}`)
+    );
+
+    const newWords = validWords.filter(word => 
+      !existingWordKeys.has(`${word.hebrewText}|${word.englishTranslation}`)
+    );
+
+    if (newWords.length === 0) {
+      return NextResponse.json(
+        { message: 'All words already exist in this section' },
+        { status: 400 }
+      );
+    }
+
+    // Create the new words
+    const createdWords = await prisma.word.createMany({
+      data: newWords,
+      skipDuplicates: true
+    });
+
+    return NextResponse.json({
+      message: `Successfully added ${createdWords.count} words to the section`,
+      addedCount: createdWords.count,
+      duplicatesSkipped: validWords.length - newWords.length
+    }, { status: 201 });
+
+  } catch (error) {
+    console.error('Error adding words:', error);
+    return NextResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
