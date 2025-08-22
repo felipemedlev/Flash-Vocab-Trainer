@@ -2,14 +2,12 @@
 
 import { AppShell, Group, ActionIcon, Button, Text, Box, Divider, Stack } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { 
-  IconMenu2, 
-  IconX, 
-  IconChartBar, 
-  IconBooks, 
-  IconUser, 
-  IconUpload, 
-  IconLogout,
+import {
+  IconMenu2,
+  IconX,
+  IconChartBar,
+  IconBooks,
+  IconUser, IconLogout,
   IconLogin,
   IconUserPlus,
   IconSparkles

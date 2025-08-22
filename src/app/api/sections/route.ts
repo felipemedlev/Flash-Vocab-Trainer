@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/db';
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
     const languageCode = searchParams.get('language');
 
     // If language is specified, filter by language
-    let whereClause: any = {
+    const whereClause: Prisma.SectionWhereInput = {
       OR: [
         { createdByUserId: parseInt(session.user.id) },
         { isDefault: true }

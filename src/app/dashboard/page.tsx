@@ -18,9 +18,7 @@ import {
   Alert,
   Card,
   SimpleGrid,
-  Anchor,
-  Stack,
-  Divider
+  Anchor
 } from '@mantine/core';
 import { 
   IconBooks, 

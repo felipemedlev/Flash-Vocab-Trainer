@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from '@/auth';
 import db from "@/lib/db";
@@ -34,8 +35,7 @@ export async function GET(
       return NextResponse.json({ message: 'Invalid section ID' }, { status: 400 });
     }
 
-    // Build where clause
-    let whereClause: any = {
+    const whereClause: Prisma.SectionWhereInput = {
       AND: [
         { id: numericSectionId },
         {
@@ -57,7 +57,7 @@ export async function GET(
         return NextResponse.json({ message: 'Language not found' }, { status: 404 });
       }
 
-      whereClause.AND.push({ languageId: language.id });
+      (whereClause.AND as Prisma.SectionWhereInput[]).push({ languageId: language.id });
     }
 
     // First get basic section info

@@ -16,7 +16,7 @@ import {
 } from '@mantine/core';
 import { IconTrendingUp, IconUsers, IconStar, IconChevronRight } from '@tabler/icons-react';
 import Link from 'next/link';
-import { SUPPORTED_LANGUAGES, type LanguageConfig } from '@/config/languages';
+import { SUPPORTED_LANGUAGES } from '@/config/languages';
 import { LanguageDisplay } from './LanguageText';
 import { useSession } from 'next-auth/react';
 
