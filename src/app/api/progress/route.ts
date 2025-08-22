@@ -38,7 +38,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
@@ -51,12 +51,12 @@ export async function POST(request: Request) {
 
   try {
     let userProgress: UserProgress | null = null;
-    
+
     try {
       userProgress = await prisma.userProgress.findFirst({
         where: {
           userId: parseInt(session.user.id),
-          wordId: wordId,
+          wordId: parseInt(wordId),
         },
       });
     } catch (error: unknown) {
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
         userProgress = await prisma.userProgress.findFirst({
           where: {
             userId: parseInt(session.user.id),
-            wordId: wordId,
+            wordId: parseInt(wordId),
           },
         });
       } else {
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
         userProgress = await prisma.userProgress.create({
           data: {
             userId: parseInt(session.user.id),
-            wordId: wordId,
+            wordId: parseInt(wordId),
             correctCount: 0,
             incorrectCount: 0,
             consecutiveCorrect: 0,
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
           userProgress = await prisma.userProgress.create({
             data: {
               userId: parseInt(session.user.id),
-              wordId: wordId,
+              wordId: parseInt(wordId),
               correctCount: 0,
               incorrectCount: 0,
               consecutiveCorrect: 0,
@@ -124,9 +124,9 @@ export async function POST(request: Request) {
 
     // Calculate SM-2 quality rating based on performance
     const quality = mapPerformanceToQuality(isCorrect, responseTime, sessionWordAttempts);
-    
 
-    
+
+
     // Apply SM-2 algorithm
     const sm2Result = calculateSM2({
       quality,
@@ -137,16 +137,16 @@ export async function POST(request: Request) {
 
     // Ensure the nextReviewDate is a valid Date object
     const nextReviewDate = new Date(sm2Result.nextReviewDate);
-    
 
-    
+
+
     const updatedData = {
       timesSeen: userProgress.timesSeen + 1,
       lastSeen: new Date(),
       correctCount: isCorrect ? userProgress.correctCount + 1 : userProgress.correctCount,
       incorrectCount: isCorrect ? userProgress.incorrectCount : userProgress.incorrectCount + 1,
       consecutiveCorrect: isCorrect ? userProgress.consecutiveCorrect + 1 : 0,
-      
+
       // SM-2 fields
       easinessFactor: sm2Result.easinessFactor,
       interval: sm2Result.interval,
@@ -186,9 +186,9 @@ export async function POST(request: Request) {
 
 
     const wasLearned = sm2Result.isLearned && !userProgress.isManuallyLearned;
-    
 
-    
+
+
     return NextResponse.json({
       ...updatedProgress,
       wasLearned: wasLearned, // New learning in this session

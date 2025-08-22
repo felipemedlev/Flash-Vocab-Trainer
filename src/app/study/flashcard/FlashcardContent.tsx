@@ -25,6 +25,7 @@ export default function FlashcardContent() {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0); // New state for loading progress
   const [error, setError] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -61,31 +62,34 @@ export default function FlashcardContent() {
       setLoading(false);
       return;
     }
-    
+
     // Prevent multiple fetches
     if (hasFetchedRef.current) {
       return;
     }
-    
+
     // Provide default values for missing parameters
     const defaultLength = 10;
     const actualLength = sessionLength || defaultLength.toString();
     if (status === "authenticated") {
       try {
+        setLoadingProgress(0); // Start loading from 0
         hasFetchedRef.current = true;
         // Validate and limit session length to prevent performance issues
         const validatedLength = Math.min(parseInt(actualLength), 100);
-        
+
+        setLoadingProgress(25); // Progress after validation
         // Add timeout to prevent hanging requests
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-        
+
         const response = await fetch(
           `/api/words?sectionId=${sectionId}&length=${validatedLength}`,
           { signal: controller.signal }
         );
-        
+
         clearTimeout(timeoutId);
+        setLoadingProgress(75); // Progress after fetch
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -95,14 +99,20 @@ export default function FlashcardContent() {
         }
         setFlashcards(data);
         setCardStartTime(Date.now()); // Start timing the first card
+        // Ensure progress reaches 100% before setting loading to false
+        setLoadingProgress(100);
       } catch (e: unknown) {
         if (e instanceof Error && e.name === 'AbortError') {
           setError('Request timed out. Please try again with a smaller session length.');
         } else {
           setError(e instanceof Error ? e.message : 'An unknown error occurred');
         }
+        setLoadingProgress(0); // Reset on error
       } finally {
-        setLoading(false);
+        // Introduce a small delay to allow the progress bar to visually reach 100%
+        setTimeout(() => {
+          setLoading(false);
+        }, 300); // 300ms delay
       }
     }
   }, [sectionId, sessionLength, status]);
@@ -198,7 +208,7 @@ export default function FlashcardContent() {
     // Calculate response time
     const responseTime = Date.now() - cardStartTime;
     const currentWordId = flashcards[currentCardIndex].wordId;
-    
+
     // Track attempts for this word in this session
     const wordAttempts = (sessionWordAttempts[currentWordId] || 0) + 1;
     setSessionWordAttempts(prev => ({
@@ -234,10 +244,10 @@ export default function FlashcardContent() {
         const sessionLength = Math.round((Date.now() - sessionStats.startTime) / 1000 / 60); // minutes
         const finalCorrectAnswers = sessionStats.correctAnswers + (correct ? 1 : 0);
         const finalTotalAnswers = sessionStats.totalAnswers + 1;
-        
+
         // Wait for any remaining progress updates to complete
         let finalWordsLearned = sessionWordsLearned;
-        
+
         if (progressQueue.length > 0) {
           // Process remaining queue items synchronously
           for (const progressUpdate of progressQueue) {
@@ -263,7 +273,7 @@ export default function FlashcardContent() {
           // Clear the queue
           setProgressQueue([]);
         }
-        
+
         const params = new URLSearchParams({
           sectionId: sectionId || '',
           wordsStudied: finalTotalAnswers.toString(),
@@ -271,7 +281,7 @@ export default function FlashcardContent() {
           sessionLength: sessionLength.toString(),
           wordsLearnedInSession: finalWordsLearned.toString()
         });
-        
+
         router.push(`/study/completion?${params.toString()}`);
       }
     }, 1000); // Reduced to 1 second delay for faster card transitions
@@ -307,7 +317,10 @@ export default function FlashcardContent() {
         <Text size="lg">Preparing your study session...</Text>
         <Text size="sm" c="dimmed">Finding the best words for you to learn</Text>
         <div className="w-64 bg-gray-200 rounded-full h-2">
-          <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+          <div
+            className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+            style={{ width: `${loadingProgress}%` }}
+          ></div>
         </div>
         <Text size="xs" c="dimmed">This may take a few seconds for large sections</Text>
       </div>
@@ -323,15 +336,15 @@ export default function FlashcardContent() {
           {error}
         </Text>
         <div className="flex gap-2">
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Try Again
           </button>
           {sectionId && (
-            <button 
-              onClick={() => router.push(`/study/${sectionId}`)} 
+            <button
+              onClick={() => router.push(`/study/${sectionId}`)}
               className="mt-4 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
             >
               Setup Session
@@ -350,8 +363,8 @@ export default function FlashcardContent() {
         <Text size="sm" c="dimmed" ta="center">
           It looks like you&apos;ve already mastered all the words in this section with the selected criteria.
         </Text>
-        <button 
-          onClick={() => window.history.back()} 
+        <button
+          onClick={() => window.history.back()}
           className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           ← Go Back
@@ -382,8 +395,8 @@ export default function FlashcardContent() {
           />
           {showFeedback && (
             <div className={`text-center mt-4 p-3 rounded-lg transition-all duration-300 ${
-              isCorrect 
-                ? 'bg-green-100 border border-green-300 text-green-800' 
+              isCorrect
+                ? 'bg-green-100 border border-green-300 text-green-800'
                 : 'bg-red-100 border border-red-300 text-red-800'
             }`}>
               <Text fw={500} size="lg">
