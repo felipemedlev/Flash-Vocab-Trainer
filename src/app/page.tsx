@@ -13,7 +13,8 @@ import {
   ThemeIcon,
   rem,
   Box,
-  Center
+  Center,
+  Tabs
 } from '@mantine/core';
 import {
   IconBook,
@@ -22,13 +23,18 @@ import {
   IconUsers,
   IconRocket,
   IconTarget,
-  IconCheck
+  IconCheck,
+  IconWorld,
+  IconLanguage
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { LanguageSelector } from '@/components/LanguageSelector';
+import { useState } from 'react';
 
 export default function Home() {
   const { data: session } = useSession();
+  const [activeTab, setActiveTab] = useState<string | null>('languages');
 
   const features = [
     {
@@ -38,9 +44,9 @@ export default function Home() {
       color: 'blue'
     },
     {
-      icon: IconBook,
-      title: 'Hebrew Focus',
-      description: 'Specialized content for Hebrew language learners',
+      icon: IconWorld,
+      title: 'Multi-Language',
+      description: 'Learn 9 languages with native content and cultural context',
       color: 'green'
     },
     {
@@ -51,16 +57,16 @@ export default function Home() {
     },
     {
       icon: IconUsers,
-      title: 'Community',
-      description: 'Join fellow Hebrew learners in your journey',
+      title: 'Global Community',
+      description: 'Join millions of learners worldwide in your journey',
       color: 'grape'
     }
   ];
 
   const stats = [
-    { label: 'Words Mastered', value: '100+', icon: '📚' },
-    { label: 'Study Sessions', value: '10+', icon: '⏱️' },
-    { label: 'Active Learners', value: '500+', icon: '👥' },
+    { label: 'Languages Available', value: '9', icon: '🌍' },
+    { label: 'Words Available', value: '1000+', icon: '📚' },
+    { label: 'Active Learners', value: '1M+', icon: '👥' },
     { label: 'Success Rate', value: '95%', icon: '🎯' }
   ];
 
@@ -89,7 +95,7 @@ export default function Home() {
                       letterSpacing: '0.5px'
                     }}
                   >
-                    ✨ AI-Powered Hebrew Learning
+                    ✨ AI-Powered Multi-Language Learning
                   </Box>
 
                   <Title
@@ -104,7 +110,7 @@ export default function Home() {
                       letterSpacing: '-0.02em'
                     }}
                   >
-                    Master Hebrew with
+                    Master Languages with
                     <br />
                     <span style={{
                       background: 'linear-gradient(135deg, #3B82F6, #A855F7, #22C55E)',
@@ -130,238 +136,115 @@ export default function Home() {
                       fontSize: 'clamp(1.1rem, 2.8vw, 1.35rem)'
                     }}
                   >
-                    Transform your Hebrew learning journey with our intelligent flashcard system.
-                    Upload custom Excel files, leverage AI-powered spaced repetition, and track
-                    your progress with detailed analytics.
+                    Transform your language learning journey with our intelligent flashcard system.
+                    Choose from 9 languages, upload custom Excel files, leverage AI-powered spaced repetition, 
+                    and track your progress with detailed analytics.
                   </Text>
                 </Box>
 
-                <Stack gap="lg" align="center" style={{ width: '100%', maxWidth: '600px', padding: '0 1rem' }}>
-                {session ? (
-                  <>
+                {/* Quick Actions for authenticated users */}
+                {session && (
+                  <Group gap="md" justify="center" style={{ width: '100%', maxWidth: '500px', padding: '0 1rem' }}>
                     <Button
                       component={Link}
-                      href="/study"
-                      size="xl"
-                      radius="xl"
-                      fullWidth
-                      leftSection={<IconRocket size={22} />}
-                      style={{
-                        background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
-                        boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.3)',
-                        border: '1px solid rgba(59, 130, 246, 0.2)',
-                        color: '#ffffff',
-                        fontWeight: 700,
-                        fontSize: '18px',
-                        height: '64px',
-                        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        overflow: 'hidden'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.01)';
-                        e.currentTarget.style.boxShadow = '0 15px 40px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.4)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0px) scale(1)';
-                        e.currentTarget.style.boxShadow = '0 10px 30px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.3)';
-                      }}
-                    >
-                      Start Studying
-                    </Button>
-                    <Group gap="md" style={{ width: '100%' }}>
-                      <Button
-                        component={Link}
-                        href="/dashboard"
-                        variant="light"
-                        size="lg"
-                        radius="xl"
-                        leftSection={<IconTarget size={20} />}
-                        style={{
-                          flex: 1,
-                          background: 'rgba(255, 255, 255, 0.8)',
-                          backdropFilter: 'blur(10px)',
-                          border: '1px solid rgba(0, 0, 0, 0.08)',
-                          color: '#374151',
-                          fontWeight: 600,
-                          height: '52px',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
-                          e.currentTarget.style.transform = 'translateY(-1px)';
-                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.1)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
-                          e.currentTarget.style.transform = 'translateY(0px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
-                        }}
-                      >
-                        Dashboard
-                      </Button>
-                      <Button
-                        component={Link}
-                        href="/upload"
-                        variant="light"
-                        size="lg"
-                        radius="xl"
-                        leftSection={<IconBook size={20} />}
-                        style={{
-                          flex: 1,
-                          background: 'rgba(255, 255, 255, 0.8)',
-                          backdropFilter: 'blur(10px)',
-                          border: '1px solid rgba(0, 0, 0, 0.08)',
-                          color: '#374151',
-                          fontWeight: 600,
-                          height: '52px',
-                          transition: 'all 0.3s ease',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
-                          e.currentTarget.style.transform = 'translateY(-1px)';
-                          e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.1)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
-                          e.currentTarget.style.transform = 'translateY(0px)';
-                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
-                        }}
-                      >
-                        Upload Excel
-                      </Button>
-                    </Group>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      component={Link}
-                      href="/auth/login"
-                      size="xl"
-                      radius="xl"
-                      fullWidth
-                      leftSection={<IconRocket size={22} />}
-                      style={{
-                        background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
-                        boxShadow: '0 10px 30px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.3)',
-                        border: '1px solid rgba(59, 130, 246, 0.2)',
-                        color: '#ffffff',
-                        fontWeight: 700,
-                        fontSize: '18px',
-                        height: '64px',
-                        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                        cursor: 'pointer',
-                        position: 'relative',
-                        overflow: 'hidden'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px) scale(1.01)';
-                        e.currentTarget.style.boxShadow = '0 15px 40px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.4)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0px) scale(1)';
-                        e.currentTarget.style.boxShadow = '0 10px 30px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.3)';
-                      }}
-                    >
-                      Start Learning Now
-                    </Button>
-                    <Button
-                      component={Link}
-                      href="/auth/register"
+                      href="/dashboard"
                       variant="light"
                       size="lg"
                       radius="xl"
-                      fullWidth
-                      leftSection={<IconUsers size={20} />}
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.8)',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(0, 0, 0, 0.08)',
-                        color: '#374151',
-                        fontWeight: 600,
-                        height: '52px',
-                        transition: 'all 0.3s ease',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
-                        e.currentTarget.style.transform = 'translateY(-1px)';
-                        e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.1)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.8)';
-                        e.currentTarget.style.transform = 'translateY(0px)';
-                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.05)';
-                      }}
+                      leftSection={<IconTarget size={20} />}
                     >
-                      ✨ Create Free Account
+                      Dashboard
                     </Button>
-                  </>
+                    <Button
+                      component={Link}
+                      href="/upload"
+                      variant="light"
+                      size="lg"
+                      radius="xl"
+                      leftSection={<IconBook size={20} />}
+                    >
+                      Upload Content
+                    </Button>
+                  </Group>
                 )}
-              </Stack>
           </Stack>
         </Center>
       </Container>
 
-      {/* Features Section */}
-      <Container size="xl" py={30}>
-        <Paper
-          withBorder
-          radius="lg"
-          p="xl"
-          style={{
-            background: 'linear-gradient(135deg, #667eea10, #764ba210)'
-          }}
-        >
-          <Stack gap="l">
-            <Box style={{ textAlign: 'center' }}>
-              <Title order={2} size={rem(40)} mb="md">
-                Why Choose Ulpan Flashcards? 🤔
-              </Title>
-              <Text size="lg" c="dimmed" style={{ maxWidth: '600px', margin: '0 auto' }}>
-                Our platform combines the best of traditional learning with cutting-edge technology
-              </Text>
-            </Box>
+      {/* Main Content Tabs */}
+      <Container size="xl" py={40}>
+        <Tabs value={activeTab} onChange={setActiveTab} variant="pills" radius="md">
+          <Tabs.List justify="center" mb="xl">
+            <Tabs.Tab 
+              value="languages" 
+              leftSection={<IconWorld size={18} />}
+              style={{ fontSize: '16px', padding: '12px 24px' }}
+            >
+              Choose Language
+            </Tabs.Tab>
+            <Tabs.Tab 
+              value="features" 
+              leftSection={<IconLanguage size={18} />}
+              style={{ fontSize: '16px', padding: '12px 24px' }}
+            >
+              Why Choose Us
+            </Tabs.Tab>
+          </Tabs.List>
 
-            <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="xl">
-            {features.map((feature, index) => (
-              <Card
-                key={index}
-                shadow="sm"
-                padding="xl"
-                radius="md"
-                withBorder
-                style={{
-                  background: 'linear-gradient(135deg, rgb(253, 253, 253) 0%, rgba(255,255,255,0.05) 100%)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.2)'
-                }}
-              >
-                <ThemeIcon
-                  size={rem(60)}
-                  radius={rem(30)}
-                  variant="gradient"
-                  gradient={{ deg: 135, from: feature.color, to: feature.color }}
-                  mb="md"
-                  style={{ marginLeft: 'auto', marginRight: 'auto' }}
-                >
-                  <feature.icon size={rem(30)} />
-                </ThemeIcon>
-                <Text ta="center" fw={500} size="lg" mb="sm">
-                  {feature.title}
+          <Tabs.Panel value="languages">
+            <LanguageSelector />
+          </Tabs.Panel>
+
+          <Tabs.Panel value="features">
+            {/* Features content will go here */}
+            <Stack gap="xl">
+              <Box style={{ textAlign: 'center' }}>
+                <Title order={2} size={rem(40)} mb="md">
+                  Why Choose Our Platform? 🤔
+                </Title>
+                <Text size="lg" c="dimmed" style={{ maxWidth: '600px', margin: '0 auto' }}>
+                  Our platform combines the best of traditional learning with cutting-edge technology
                 </Text>
-                <Text ta="center" size="sm" c="dimmed">
-                  {feature.description}
-                </Text>
-              </Card>
-            ))}
-          </SimpleGrid>
-        </Stack>
-        </Paper>
+              </Box>
+
+              <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="xl">
+                {features.map((feature, index) => (
+                  <Card
+                    key={index}
+                    shadow="sm"
+                    padding="xl"
+                    radius="md"
+                    withBorder
+                    style={{
+                      background: 'linear-gradient(135deg, rgb(253, 253, 253) 0%, rgba(255,255,255,0.05) 100%)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255,255,255,0.2)'
+                    }}
+                  >
+                    <ThemeIcon
+                      size={rem(60)}
+                      radius={rem(30)}
+                      variant="gradient"
+                      gradient={{ deg: 135, from: feature.color, to: feature.color }}
+                      mb="md"
+                      style={{ marginLeft: 'auto', marginRight: 'auto' }}
+                    >
+                      <feature.icon size={rem(30)} />
+                    </ThemeIcon>
+                    <Text ta="center" fw={500} size="lg" mb="sm">
+                      {feature.title}
+                    </Text>
+                    <Text ta="center" size="sm" c="dimmed">
+                      {feature.description}
+                    </Text>
+                  </Card>
+                ))}
+              </SimpleGrid>
+            </Stack>
+          </Tabs.Panel>
+        </Tabs>
       </Container>
+
 
       {/* Stats Section */}
       <Container size="xl" py={10}>

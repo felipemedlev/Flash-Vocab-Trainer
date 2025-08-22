@@ -15,18 +15,20 @@ import { IconPlus, IconTrash, IconInfoCircle } from '@tabler/icons-react';
 
 interface WordRow {
   id: string;
-  hebrewText: string;
-  englishTranslation: string;
+  originalText: string;
+  translationText: string;
+  pronunciation?: string;
 }
 
 interface WordInputProps {
   sectionId: string;
+  language?: string;
   onWordsSaved?: () => void;
 }
 
-export default function WordInput({ sectionId, onWordsSaved }: WordInputProps) {
+export default function WordInput({ sectionId, language, onWordsSaved }: WordInputProps) {
   const [wordRows, setWordRows] = useState<WordRow[]>([
-    { id: `row-${Date.now()}`, hebrewText: '', englishTranslation: '' }
+    { id: `row-${Date.now()}`, originalText: '', translationText: '', pronunciation: '' }
   ]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,8 +37,9 @@ export default function WordInput({ sectionId, onWordsSaved }: WordInputProps) {
   const addNewRow = () => {
     const newRow: WordRow = {
       id: `row-${Date.now()}`,
-      hebrewText: '',
-      englishTranslation: ''
+      originalText: '',
+      translationText: '',
+      pronunciation: ''
     };
     setWordRows([...wordRows, newRow]);
   };
@@ -47,13 +50,13 @@ export default function WordInput({ sectionId, onWordsSaved }: WordInputProps) {
     }
   };
 
-  const updateRow = (id: string, field: 'hebrewText' | 'englishTranslation', value: string) => {
+  const updateRow = (id: string, field: 'originalText' | 'translationText' | 'pronunciation', value: string) => {
     setWordRows(wordRows.map(row => 
       row.id === id ? { ...row, [field]: value } : row
     ));
   };
 
-  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>, rowId: string, field: 'hebrewText' | 'englishTranslation') => {
+  const handlePaste = (event: React.ClipboardEvent<HTMLInputElement>, rowId: string, field: 'originalText' | 'translationText') => {
     event.preventDefault();
     const pastedText = event.clipboardData.getData('text');
     
@@ -72,20 +75,24 @@ export default function WordInput({ sectionId, onWordsSaved }: WordInputProps) {
         const targetIndex = currentRowIndex + index;
         
         if (targetIndex < newRows.length) {
-          if (field === 'hebrewText' && cells[0]) {
-            newRows[targetIndex].hebrewText = cells[0].trim();
+          if (field === 'originalText' && cells[0]) {
+            newRows[targetIndex].originalText = cells[0].trim();
           }
-          if (cells[1] && field === 'hebrewText') {
-            newRows[targetIndex].englishTranslation = cells[1].trim();
-          } else if (field === 'englishTranslation' && cells[0]) {
-            newRows[targetIndex].englishTranslation = cells[0].trim();
+          if (cells[1] && field === 'originalText') {
+            newRows[targetIndex].translationText = cells[1].trim();
+          } else if (field === 'translationText' && cells[0]) {
+            newRows[targetIndex].translationText = cells[0].trim();
+          }
+          if (cells[2]) {
+            newRows[targetIndex].pronunciation = cells[2].trim();
           }
         } else {
           // Add new rows if needed
           const newRow: WordRow = {
             id: `row-${Date.now()}-${index}`,
-            hebrewText: field === 'hebrewText' && cells[0] ? cells[0].trim() : '',
-            englishTranslation: cells[1] ? cells[1].trim() : (field === 'englishTranslation' && cells[0] ? cells[0].trim() : '')
+            originalText: field === 'originalText' && cells[0] ? cells[0].trim() : '',
+            translationText: cells[1] ? cells[1].trim() : (field === 'translationText' && cells[0] ? cells[0].trim() : ''),
+            pronunciation: cells[2] ? cells[2].trim() : ''
           };
           newRows.push(newRow);
         }
@@ -100,11 +107,11 @@ export default function WordInput({ sectionId, onWordsSaved }: WordInputProps) {
 
   const saveWords = async () => {
     const validWords = wordRows.filter(row => 
-      row.hebrewText.trim() !== '' && row.englishTranslation.trim() !== ''
+      row.originalText.trim() !== '' && row.translationText.trim() !== ''
     );
     
     if (validWords.length === 0) {
-      setError('Please add at least one word with both Hebrew and English text.');
+      setError('Please add at least one word with both original and translation text.');
       return;
     }
     
@@ -121,8 +128,9 @@ export default function WordInput({ sectionId, onWordsSaved }: WordInputProps) {
         body: JSON.stringify({
           sectionId: parseInt(sectionId),
           words: validWords.map(row => ({
-            hebrewText: row.hebrewText.trim(),
-            englishTranslation: row.englishTranslation.trim()
+            originalText: row.originalText.trim(),
+            translationText: row.translationText.trim(),
+            pronunciation: row.pronunciation?.trim() || undefined
           }))
         }),
       });
@@ -134,7 +142,7 @@ export default function WordInput({ sectionId, onWordsSaved }: WordInputProps) {
         setSuccess(successMessage);
         
         // Clear the form
-        setWordRows([{ id: `row-${Date.now()}`, hebrewText: '', englishTranslation: '' }]);
+        setWordRows([{ id: `row-${Date.now()}`, originalText: '', translationText: '', pronunciation: '' }]);
         onWordsSaved?.();
       } else {
         setError(result.message || 'Failed to save words');
@@ -147,7 +155,7 @@ export default function WordInput({ sectionId, onWordsSaved }: WordInputProps) {
   };
 
   const clearForm = () => {
-    setWordRows([{ id: `row-${Date.now()}`, hebrewText: '', englishTranslation: '' }]);
+    setWordRows([{ id: `row-${Date.now()}`, originalText: '', translationText: '', pronunciation: '' }]);
     setError(null);
     setSuccess(null);
   };
@@ -175,21 +183,29 @@ export default function WordInput({ sectionId, onWordsSaved }: WordInputProps) {
           <Paper key={row.id} p="sm" withBorder>
             <Group align="flex-end" wrap="nowrap">
               <TextInput
-                label={index === 0 ? "Hebrew" : undefined}
-                placeholder="Enter Hebrew text..."
-                value={row.hebrewText}
-                onChange={(e) => updateRow(row.id, 'hebrewText', e.target.value)}
-                onPaste={(e) => handlePaste(e, row.id, 'hebrewText')}
-                style={{ textAlign: 'right', direction: 'rtl', flex: 1 }}
+                label={index === 0 ? (language ? "Original" : "Target Language") : undefined}
+                placeholder={`Enter ${language || 'target language'} text...`}
+                value={row.originalText}
+                onChange={(e) => updateRow(row.id, 'originalText', e.target.value)}
+                onPaste={(e) => handlePaste(e, row.id, 'originalText')}
+                style={{ flex: 1 }}
                 disabled={saving}
               />
               <TextInput
                 label={index === 0 ? "English" : undefined}
                 placeholder="Enter English translation..."
-                value={row.englishTranslation}
-                onChange={(e) => updateRow(row.id, 'englishTranslation', e.target.value)}
-                onPaste={(e) => handlePaste(e, row.id, 'englishTranslation')}
+                value={row.translationText}
+                onChange={(e) => updateRow(row.id, 'translationText', e.target.value)}
+                onPaste={(e) => handlePaste(e, row.id, 'translationText')}
                 style={{ flex: 1 }}
+                disabled={saving}
+              />
+              <TextInput
+                label={index === 0 ? "Pronunciation" : undefined}
+                placeholder="Enter pronunciation (optional)..."
+                value={row.pronunciation || ''}
+                onChange={(e) => updateRow(row.id, 'pronunciation', e.target.value)}
+                style={{ flex: 0.8 }}
                 disabled={saving}
               />
               {wordRows.length > 1 && (

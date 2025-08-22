@@ -14,9 +14,10 @@ import { IconPlayerPlay, IconEye } from '@tabler/icons-react';
 
 interface StudySessionSetupProps {
   sectionId: string;
+  language?: string;
 }
 
-export default function StudySessionSetup({ sectionId }: StudySessionSetupProps) {
+export default function StudySessionSetup({ sectionId, language }: StudySessionSetupProps) {
   const [sessionLength, setSessionLength] = useState('10');
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
@@ -28,12 +29,17 @@ export default function StudySessionSetup({ sectionId }: StudySessionSetupProps)
     // Validate session length to prevent performance issues
     const validatedLength = Math.min(parseInt(sessionLength), 100);
 
-    const sessionUrl = `/study/flashcard?sectionId=${sectionId}&length=${validatedLength}`;
+    const sessionUrl = language 
+      ? `/study/${language}/${sectionId}/flashcard?length=${validatedLength}`
+      : `/study/he/${sectionId}/flashcard?length=${validatedLength}`;
     router.push(sessionUrl);
   };
 
   const handleViewWords = () => {
-    router.push(`/sections/${sectionId}/words`);
+    const wordsUrl = language 
+      ? `/learn/${language}/sections/${sectionId}/words`
+      : `/sections/${sectionId}/words`;
+    router.push(wordsUrl);
   };
 
   return (

@@ -1,23 +1,48 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/db';
-import { Section, Word, UserProgress } from '@prisma/client';
+import { Section, Word, UserProgress, Language } from '@prisma/client';
+import { isValidLanguageCode } from '@/config/languages';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
   try {
+    const { searchParams } = new URL(request.url);
+    const languageCode = searchParams.get('language');
+
+    // If language is specified, filter by language
+    let whereClause: any = {
+      OR: [
+        { createdByUserId: parseInt(session.user.id) },
+        { isDefault: true }
+      ]
+    };
+
+    if (languageCode) {
+      if (!isValidLanguageCode(languageCode)) {
+        return NextResponse.json({ message: 'Invalid language code' }, { status: 400 });
+      }
+
+      // Get language ID
+      const language = await prisma.language.findUnique({
+        where: { code: languageCode }
+      });
+
+      if (!language) {
+        return NextResponse.json({ message: 'Language not found' }, { status: 404 });
+      }
+
+      whereClause.languageId = language.id;
+    }
+
     const sections = await prisma.section.findMany({
-      where: {
-        OR: [
-          { createdByUserId: parseInt(session.user.id) },
-          { isDefault: true }
-        ]
-      },
+      where: whereClause,
       include: {
+        language: true,
         words: {
           include: {
             progress: {
@@ -28,10 +53,17 @@ export async function GET() {
             },
           },
         }
-      }
+      },
+      orderBy: [
+        { isDefault: 'desc' },
+        { createdAt: 'desc' }
+      ]
     });
 
-    const sectionsWithProgress = sections.map((section: Section & { words: (Word & { progress: UserProgress[] })[] }) => {
+    const sectionsWithProgress = sections.map((section: Section & { 
+      words: (Word & { progress: UserProgress[] })[];
+      language: Language;
+    }) => {
       const totalWords = section.words.length;
       const learnedWords = section.words.filter(word => 
         word.progress.some(p => p.isManuallyLearned)
@@ -41,6 +73,13 @@ export async function GET() {
         name: section.name,
         description: section.description,
         isDefault: section.isDefault,
+        languageId: section.languageId,
+        language: {
+          code: section.language.code,
+          name: section.language.name,
+          nativeName: section.language.nativeName,
+          isRTL: section.language.isRTL
+        },
         totalWords,
         learnedWords,
       };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Text } from "@mantine/core";
 import { FlashCard } from "@/components/FlashCard";
@@ -9,7 +9,8 @@ import { LinearProgress } from "@/components/LinearProgress";
 
 interface Flashcard {
   wordId: number;
-  hebrewText: string;
+  originalText: string;
+  pronunciation?: string;
   correctTranslation: string;
   options: string[];
   level: 'new' | 'learning' | 'review' | 'mastered';
@@ -18,7 +19,9 @@ interface Flashcard {
 export default function FlashcardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sectionId = searchParams.get("sectionId");
+  const params = useParams();
+  const sectionId = params.sectionId as string;
+  const language = params.language as string;
   const sessionLength = searchParams.get("length");
   const { status } = useSession();
 
@@ -390,8 +393,10 @@ export default function FlashcardContent() {
 
         <div className="mb-8">
           <FlashCard
-            hebrew={currentCard.hebrewText}
+            originalText={currentCard.originalText}
+            pronunciation={currentCard.pronunciation}
             level={currentCard.level}
+            languageCode={language}
           />
           {showFeedback && (
             <div className={`text-center mt-4 p-3 rounded-lg transition-all duration-300 ${

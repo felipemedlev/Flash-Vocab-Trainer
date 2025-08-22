@@ -1,346 +1,217 @@
-import db from '../src/lib/db';
+import { PrismaClient } from '@prisma/client';
 
-// Hebrew vocabulary for pre-loading
-const defaultSections = [
-  {
-    name: '100 Most Used Words',
-    description: 'The 100 most frequently used words in the Hebrew language.',
-    isDefault: true,
-    words: [
-        { hebrew: 'שלום', english: 'Hello / Peace' },
-        { hebrew: 'תודה', english: 'Thank you' },
-        { hebrew: 'כן', english: 'Yes' },
-        { hebrew: 'לא', english: 'No' },
-        { hebrew: 'בבקשה', english: 'Please / You\'re welcome' },
-        { hebrew: 'סליחה', english: 'Sorry / Excuse me' },
-        { hebrew: 'מה', english: 'What' },
-        { hebrew: 'מי', english: 'Who' },
-        { hebrew: 'מתי', english: 'When' },
-        { hebrew: 'איפה', english: 'Where' },
-        { hebrew: 'למה', english: 'Why' },
-        { hebrew: 'איך', english: 'How' },
-        { hebrew: 'אני', english: 'I / Me' },
-        { hebrew: 'אתה', english: 'You (m)' },
-        { hebrew: 'את', english: 'You (f)' },
-        { hebrew: 'הוא', english: 'He' },
-        { hebrew: 'היא', english: 'She' },
-        { hebrew: 'אנחנו', english: 'We' },
-        { hebrew: 'אתם', english: 'You (m, pl)' },
-        { hebrew: 'אתן', english: 'You (f, pl)' },
-        { hebrew: 'הם', english: 'They (m)' },
-        { hebrew: 'הן', english: 'They (f)' },
-        { hebrew: 'זה', english: 'This / That (m)' },
-        { hebrew: 'זאת', english: 'This / That (f)' },
-        { hebrew: 'אלה', english: 'These / Those' },
-        { hebrew: 'טוב', english: 'Good' },
-        { hebrew: 'רע', english: 'Bad' },
-        { hebrew: 'גדול', english: 'Big' },
-        { hebrew: 'קטן', english: 'Small' },
-        { hebrew: 'הרבה', english: 'A lot / Many' },
-        { hebrew: 'קצת', english: 'A little' },
-        { hebrew: 'יפה', english: 'Beautiful' },
-        { hebrew: 'חדש', english: 'New' },
-        { hebrew: 'ישן', english: 'Old' },
-        { hebrew: 'מים', english: 'Water' },
-        { hebrew: 'אוכל', english: 'Food' },
-        { hebrew: 'בית', english: 'House / Home' },
-        { hebrew: 'איש', english: 'Man / Person' },
-        { hebrew: 'אישה', english: 'Woman / Wife' },
-        { hebrew: 'ילד', english: 'Boy / Child' },
-        { hebrew: 'ילדה', english: 'Girl' },
-        { hebrew: 'יום', english: 'Day' },
-        { hebrew: 'לילה', english: 'Night' },
-        { hebrew: 'בוקר', english: 'Morning' },
-        { hebrew: 'ערב', english: 'Evening' },
-        { hebrew: 'עבודה', english: 'Work' },
-        { hebrew: 'כסף', english: 'Money' },
-        { hebrew: 'אהבה', english: 'Love' },
-        { hebrew: 'שם', english: 'Name / There' },
-        { hebrew: 'פה', english: 'Here' },
-        { hebrew: 'יש', english: 'There is / There are' },
-        { hebrew: 'אין', english: 'There isn\'t / There aren\'t' },
-        { hebrew: 'הכל', english: 'Everything' },
-        { hebrew: 'כלום', english: 'Nothing' },
-        { hebrew: 'יותר', english: 'More' },
-        { hebrew: 'פחות', english: 'Less' },
-        { hebrew: 'תמיד', english: 'Always' },
-        { hebrew: 'אף פעם', english: 'Never' },
-        { hebrew: 'עכשיו', english: 'Now' },
-        { hebrew: 'אחר כך', english: 'Later' },
-        { hebrew: 'לפני', english: 'Before' },
-        { hebrew: 'אחרי', english: 'After' },
-        { hebrew: 'עם', english: 'With' },
-        { hebrew: 'בלי', english: 'Without' },
-        { hebrew: 'של', english: 'Of / Belonging to' },
-        { hebrew: 'את', english: '(Direct object marker)' },
-        { hebrew: 'ב', english: 'In / At' },
-        { hebrew: 'ל', english: 'To / For' },
-        { hebrew: 'מ', english: 'From' },
-        { hebrew: 'על', english: 'On / About' },
-        { hebrew: 'אל', english: 'To / Towards' },
-        { hebrew: 'בין', english: 'Between' },
-        { hebrew: 'אבל', english: 'But' },
-        { hebrew: 'או', english: 'Or' },
-        { hebrew: 'אם', english: 'If' },
-        { hebrew: 'כי', english: 'Because' },
-        { hebrew: 'אשר', english: 'Which / That' },
-        { hebrew: 'גם', english: 'Also / Too' },
-        { hebrew: 'רק', english: 'Only' },
-        { hebrew: 'מאוד', english: 'Very' },
-        { hebrew: 'כמו', english: 'Like / As' },
-        { hebrew: 'אחד', english: 'One (m)' },
-        { hebrew: 'אחת', english: 'One (f)' },
-        { hebrew: 'שניים', english: 'Two (m)' },
-        { hebrew: 'שתיים', english: 'Two (f)' },
-        { hebrew: 'שלוש', english: 'Three' },
-        { hebrew: 'ארבע', english: 'Four' },
-        { hebrew: 'חמש', english: 'Five' },
-        { hebrew: 'שש', english: 'Six' },
-        { hebrew: 'שבע', english: 'Seven' },
-        { hebrew: 'שמונה', english: 'Eight' },
-        { hebrew: 'תשע', english: 'Nine' },
-        { hebrew: 'עשר', english: 'Ten' },
-    ],
-  },
-  {
-    name: '100 Most Used Verbs',
-    description: 'The 100 most frequently used verbs in the Hebrew language.',
-    isDefault: true,
-    words: [
-        { hebrew: 'להיות', english: 'To be' },
-        { hebrew: 'לחיות', english: 'To live' },
-        { hebrew: 'לרצות', english: 'To want' },
-        { hebrew: 'לעשות', english: 'To do / To make' },
-        { hebrew: 'לומר', english: 'To say' },
-        { hebrew: 'לדבר', english: 'To speak' },
-        { hebrew: 'ללכת', english: 'To go / To walk' },
-        { hebrew: 'לבוא', english: 'To come' },
-        { hebrew: 'לראות', english: 'To see' },
-        { hebrew: 'לשמוע', english: 'To hear' },
-        { hebrew: 'לאכול', english: 'To eat' },
-        { hebrew: 'לשתות', english: 'To drink' },
-        { hebrew: 'לישון', english: 'To sleep' },
-        { hebrew: 'לעבוד', english: 'To work' },
-        { hebrew: 'ללמוד', english: 'To learn / To study' },
-        { hebrew: 'לכתוב', english: 'To write' },
-        { hebrew: 'לקרוא', english: 'To read' },
-        { hebrew: 'לדעת', english: 'To know' },
-        { hebrew: 'להבין', english: 'To understand' },
-        { hebrew: 'לחשוב', english: 'To think' },
-        { hebrew: 'לאהוב', english: 'To love' },
-        { hebrew: 'לתת', english: 'To give' },
-        { hebrew: 'לקחת', english: 'To take' },
-        { hebrew: 'לפתוח', english: 'To open' },
-        { hebrew: 'לסגור', english: 'To close' },
-        { hebrew: 'לשאול', english: 'To ask' },
-        { hebrew: 'לענות', english: 'To answer' },
-        { hebrew: 'לעזור', english: 'To help' },
-        { hebrew: 'לשחק', english: 'To play' },
-        { hebrew: 'לרוץ', english: 'To run' },
-        { hebrew: 'לשבת', english: 'To sit' },
-        { hebrew: 'לעמוד', english: 'To stand' },
-        { hebrew: 'לשים', english: 'To put' },
-        { hebrew: 'למצוא', english: 'To find' },
-        { hebrew: 'לצאת', english: 'To go out / To exit' },
-        { hebrew: 'להיכנס', english: 'To enter' },
-        { hebrew: 'לעלות', english: 'To go up / To cost' },
-        { hebrew: 'לרדת', english: 'To go down' },
-        { hebrew: 'לחזור', english: 'To return' },
-        { hebrew: 'להתחיל', english: 'To start / To begin' },
-        { hebrew: 'לגמור', english: 'To finish' },
-        { hebrew: 'להשתמש', english: 'To use' },
-        { hebrew: 'לנסות', english: 'To try' },
-        { hebrew: 'להרגיש', english: 'To feel' },
-        { hebrew: 'לזכור', english: 'To remember' },
-        { hebrew: 'לשכוח', english: 'To forget' },
-        { hebrew: 'לשלם', english: 'To pay' },
-        { hebrew: 'לקנות', english: 'To buy' },
-        { hebrew: 'למכור', english: 'To sell' },
-        { hebrew: 'לפגוש', english: 'To meet' },
-    ],
-  },
-  {
-    name: 'Family & Relationships',
-    description: 'Words related to family and relationships.',
-    isDefault: true,
-    words: [
-      { hebrew: 'משפחה', english: 'Family' },
-      { hebrew: 'אמא', english: 'Mother' },
-      { hebrew: 'אבא', english: 'Father' },
-      { hebrew: 'הורים', english: 'Parents' },
-      { hebrew: 'אח', english: 'Brother' },
-      { hebrew: 'אחות', english: 'Sister' },
-      { hebrew: 'בן', english: 'Son' },
-      { hebrew: 'בת', english: 'Daughter' },
-      { hebrew: 'סבא', english: 'Grandfather' },
-      { hebrew: 'סבתא', english: 'Grandmother' },
-      { hebrew: 'דוד', english: 'Uncle' },
-      { hebrew: 'דודה', english: 'Aunt' },
-      { hebrew: 'בן דוד', english: 'Cousin (m)' },
-      { hebrew: 'בת דודה', english: 'Cousin (f)' },
-      { hebrew: 'בעל', english: 'Husband' },
-      { hebrew: 'אישה', english: 'Wife' },
-      { hebrew: 'חבר', english: 'Friend / Boyfriend (m)' },
-      { hebrew: 'חברה', english: 'Friend / Girlfriend (f)' },
-      { hebrew: 'תינוק', english: 'Baby (m)' },
-      { hebrew: 'תינוקת', english: 'Baby (f)' },
-    ],
-  },
-  {
-    name: 'Food & Cooking',
-    description: 'Vocabulary for food, drinks, and cooking.',
-    isDefault: true,
-    words: [
-      { hebrew: 'לחם', english: 'Bread' },
-      { hebrew: 'גבינה', english: 'Cheese' },
-      { hebrew: 'עוף', english: 'Chicken' },
-      { hebrew: 'בשר', english: 'Meat' },
-      { hebrew: 'דג', english: 'Fish' },
-      { hebrew: 'ביצה', english: 'Egg' },
-      { hebrew: 'ירקות', english: 'Vegetables' },
-      { hebrew: 'פירות', english: 'Fruits' },
-      { hebrew: 'מים', english: 'Water' },
-      { hebrew: 'קפה', english: 'Coffee' },
-      { hebrew: 'תה', english: 'Tea' },
-      { hebrew: 'מסעדה', english: 'Restaurant' },
-      { hebrew: 'מטבח', english: 'Kitchen' },
-      { hebrew: 'רעב', english: 'Hungry' },
-      { hebrew: 'צמא', english: 'Thirsty' },
-      { hebrew: 'טעים', english: 'Delicious' },
-    ],
-  },
-  {
-    name: 'Travel & Transportation',
-    description: 'Words for traveling and getting around.',
-    isDefault: true,
-    words: [
-      { hebrew: 'מכונית', english: 'Car' },
-      { hebrew: 'אוטובוס', english: 'Bus' },
-      { hebrew: 'רכבת', english: 'Train' },
-      { hebrew: 'מטוס', english: 'Airplane' },
-      { hebrew: 'שדה תעופה', english: 'Airport' },
-      { hebrew: 'מלון', english: 'Hotel' },
-      { hebrew: 'רחוב', english: 'Street' },
-      { hebrew: 'עיר', english: 'City' },
-      { hebrew: 'מדינה', english: 'Country' },
-      { hebrew: 'טיול', english: 'Trip / Hike' },
-      { hebrew: 'מפה', english: 'Map' },
-      { hebrew: 'ימינה', english: 'Right' },
-      { hebrew: 'שמאלה', english: 'Left' },
-      { hebrew: 'ישר', english: 'Straight' },
-    ],
-  },
-  {
-    name: 'Business & Work',
-    description: 'Vocabulary related to business, work, and the office.',
-    isDefault: true,
-    words: [
-      { hebrew: 'עבודה', english: 'Work / Job' },
-      { hebrew: 'משרד', english: 'Office' },
-      { hebrew: 'חברה', english: 'Company' },
-      { hebrew: 'מנהל', english: 'Manager (m)' },
-      { hebrew: 'מנהלת', english: 'Manager (f)' },
-      { hebrew: 'עובד', english: 'Employee (m)' },
-      { hebrew: 'עובדת', english: 'Employee (f)' },
-      { hebrew: 'כסף', english: 'Money' },
-      { hebrew: 'פגישה', english: 'Meeting' },
-      { hebrew: 'מחשב', english: 'Computer' },
-      { hebrew: 'טלפון', english: 'Telephone' },
-      { hebrew: 'אימייל', english: 'Email' },
-    ],
-  },
-];
+const db = new PrismaClient();
 
 async function main() {
-  console.log('Starting database seeding...');
+  console.log('🌱 Starting multi-language database seeding...');
 
-  // Ensure a default user exists
-  let defaultUser = await db.user.findFirst();
-  if (!defaultUser) {
-    defaultUser = await db.user.create({
-      data: {
-        username: 'defaultuser',
-        email: 'default@example.com',
-        passwordHash: 'hashedpassword', // In a real app, this would be a proper hash
+  // Create languages
+  console.log('📚 Creating languages...');
+  
+  const languages = [
+    { code: 'he', name: 'Hebrew', nativeName: 'עברית', isRTL: true },
+    { code: 'es', name: 'Spanish', nativeName: 'Español', isRTL: false },
+    { code: 'fr', name: 'French', nativeName: 'Français', isRTL: false },
+    { code: 'it', name: 'Italian', nativeName: 'Italiano', isRTL: false },
+    { code: 'de', name: 'German', nativeName: 'Deutsch', isRTL: false },
+    { code: 'ru', name: 'Russian', nativeName: 'Русский', isRTL: false },
+    { code: 'zh', name: 'Chinese', nativeName: '中文', isRTL: false },
+    { code: 'pt', name: 'Portuguese', nativeName: 'Português', isRTL: false },
+    { code: 'ja', name: 'Japanese', nativeName: '日本語', isRTL: false },
+  ];
+
+  for (const lang of languages) {
+    await db.language.upsert({
+      where: { code: lang.code },
+      update: {},
+      create: lang,
+    });
+  }
+
+  console.log(`✅ Created ${languages.length} languages`);
+
+  // Create essential phrases for each language
+  console.log('💬 Creating essential phrases...');
+  
+  const essentialPhrases = {
+    he: [
+      { original: 'שלום', translation: 'Hello/Peace', pronunciation: 'Shalom' },
+      { original: 'תודה', translation: 'Thank you', pronunciation: 'Toda' },
+      { original: 'בבקשה', translation: 'Please/You\'re welcome', pronunciation: 'Bevakasha' },
+      { original: 'סליחה', translation: 'Excuse me/Sorry', pronunciation: 'Slicha' },
+      { original: 'כן', translation: 'Yes', pronunciation: 'Ken' },
+      { original: 'לא', translation: 'No', pronunciation: 'Lo' },
+      { original: 'בוקר טוב', translation: 'Good morning', pronunciation: 'Boker tov' },
+      { original: 'לילה טוב', translation: 'Good night', pronunciation: 'Laila tov' },
+      { original: 'איך קוראים לך?', translation: 'What is your name?', pronunciation: 'Eich korim lecha?' },
+      { original: 'אני מבין', translation: 'I understand', pronunciation: 'Ani mevin' },
+    ],
+    es: [
+      { original: 'Hola', translation: 'Hello', pronunciation: 'OH-lah' },
+      { original: 'Gracias', translation: 'Thank you', pronunciation: 'GRAH-see-ahs' },
+      { original: 'Por favor', translation: 'Please', pronunciation: 'por fah-VOR' },
+      { original: 'Perdón', translation: 'Excuse me/Sorry', pronunciation: 'per-DOHN' },
+      { original: 'Sí', translation: 'Yes', pronunciation: 'see' },
+      { original: 'No', translation: 'No', pronunciation: 'noh' },
+      { original: 'Buenos días', translation: 'Good morning', pronunciation: 'BWAY-nohs DEE-ahs' },
+      { original: 'Buenas noches', translation: 'Good night', pronunciation: 'BWAY-nahs NOH-chehs' },
+      { original: '¿Cómo te llamas?', translation: 'What is your name?', pronunciation: 'KOH-moh teh YAH-mahs' },
+      { original: 'Entiendo', translation: 'I understand', pronunciation: 'en-tee-EN-doh' },
+    ],
+    fr: [
+      { original: 'Bonjour', translation: 'Hello/Good day', pronunciation: 'bon-ZHOOR' },
+      { original: 'Merci', translation: 'Thank you', pronunciation: 'mer-SEE' },
+      { original: 'S\'il vous plaît', translation: 'Please', pronunciation: 'seel voo PLEH' },
+      { original: 'Excusez-moi', translation: 'Excuse me', pronunciation: 'ehk-skew-zay MWAH' },
+      { original: 'Oui', translation: 'Yes', pronunciation: 'wee' },
+      { original: 'Non', translation: 'No', pronunciation: 'nohn' },
+      { original: 'Bonjour', translation: 'Good morning', pronunciation: 'bon-ZHOOR' },
+      { original: 'Bonne nuit', translation: 'Good night', pronunciation: 'bun NWEE' },
+      { original: 'Comment vous appelez-vous?', translation: 'What is your name?', pronunciation: 'koh-mahn voo zah-play VOO' },
+      { original: 'Je comprends', translation: 'I understand', pronunciation: 'zhuh kom-PRAHN' },
+    ],
+    it: [
+      { original: 'Ciao', translation: 'Hello/Goodbye', pronunciation: 'chah-oh' },
+      { original: 'Grazie', translation: 'Thank you', pronunciation: 'GRAH-tsee-eh' },
+      { original: 'Per favore', translation: 'Please', pronunciation: 'per fah-VOH-reh' },
+      { original: 'Scusi', translation: 'Excuse me', pronunciation: 'SKOO-zee' },
+      { original: 'Sì', translation: 'Yes', pronunciation: 'see' },
+      { original: 'No', translation: 'No', pronunciation: 'noh' },
+      { original: 'Buongiorno', translation: 'Good morning', pronunciation: 'bwohn-JHOR-noh' },
+      { original: 'Buonanotte', translation: 'Good night', pronunciation: 'bwoh-nah-NOT-teh' },
+      { original: 'Come ti chiami?', translation: 'What is your name?', pronunciation: 'KOH-meh tee kee-AH-mee' },
+      { original: 'Capisco', translation: 'I understand', pronunciation: 'kah-PEES-koh' },
+    ],
+    de: [
+      { original: 'Hallo', translation: 'Hello', pronunciation: 'HAH-loh' },
+      { original: 'Danke', translation: 'Thank you', pronunciation: 'DAHN-keh' },
+      { original: 'Bitte', translation: 'Please/You\'re welcome', pronunciation: 'BIT-teh' },
+      { original: 'Entschuldigung', translation: 'Excuse me/Sorry', pronunciation: 'ent-SHOOL-di-goong' },
+      { original: 'Ja', translation: 'Yes', pronunciation: 'yah' },
+      { original: 'Nein', translation: 'No', pronunciation: 'nine' },
+      { original: 'Guten Morgen', translation: 'Good morning', pronunciation: 'GOO-ten MOR-gen' },
+      { original: 'Gute Nacht', translation: 'Good night', pronunciation: 'GOO-teh nahkt' },
+      { original: 'Wie heißen Sie?', translation: 'What is your name?', pronunciation: 'vee HIGH-sen zee' },
+      { original: 'Ich verstehe', translation: 'I understand', pronunciation: 'ikh fer-SHTEH-eh' },
+    ],
+    ru: [
+      { original: 'Привет', translation: 'Hello', pronunciation: 'pri-VYET' },
+      { original: 'Спасибо', translation: 'Thank you', pronunciation: 'spa-SEE-bah' },
+      { original: 'Пожалуйста', translation: 'Please/You\'re welcome', pronunciation: 'pah-ZHAH-loo-stah' },
+      { original: 'Извините', translation: 'Excuse me/Sorry', pronunciation: 'iz-vi-NEE-tye' },
+      { original: 'Да', translation: 'Yes', pronunciation: 'dah' },
+      { original: 'Нет', translation: 'No', pronunciation: 'nyet' },
+      { original: 'Доброе утро', translation: 'Good morning', pronunciation: 'DOH-broh-yeh OO-troh' },
+      { original: 'Спокойной ночи', translation: 'Good night', pronunciation: 'spa-KOY-noy NOH-chee' },
+      { original: 'Как вас зовут?', translation: 'What is your name?', pronunciation: 'kahk vahs za-VOOT' },
+      { original: 'Я понимаю', translation: 'I understand', pronunciation: 'yah pa-ni-MAH-yu' },
+    ],
+    zh: [
+      { original: '你好', translation: 'Hello', pronunciation: 'Nǐ hǎo' },
+      { original: '谢谢', translation: 'Thank you', pronunciation: 'Xiè xiè' },
+      { original: '请', translation: 'Please', pronunciation: 'Qǐng' },
+      { original: '对不起', translation: 'Excuse me/Sorry', pronunciation: 'Duì bù qǐ' },
+      { original: '是', translation: 'Yes', pronunciation: 'Shì' },
+      { original: '不是', translation: 'No', pronunciation: 'Bù shì' },
+      { original: '早上好', translation: 'Good morning', pronunciation: 'Zǎo shàng hǎo' },
+      { original: '晚安', translation: 'Good night', pronunciation: 'Wǎn ān' },
+      { original: '你叫什么名字?', translation: 'What is your name?', pronunciation: 'Nǐ jiào shén me míng zì?' },
+      { original: '我明白', translation: 'I understand', pronunciation: 'Wǒ míng bái' },
+    ],
+    pt: [
+      { original: 'Olá', translation: 'Hello', pronunciation: 'oh-LAH' },
+      { original: 'Obrigado', translation: 'Thank you', pronunciation: 'oh-bree-GAH-doo' },
+      { original: 'Por favor', translation: 'Please', pronunciation: 'por fah-VOR' },
+      { original: 'Desculpe', translation: 'Excuse me/Sorry', pronunciation: 'desh-KOOL-peh' },
+      { original: 'Sim', translation: 'Yes', pronunciation: 'seem' },
+      { original: 'Não', translation: 'No', pronunciation: 'nah-OW' },
+      { original: 'Bom dia', translation: 'Good morning', pronunciation: 'bom DEE-ah' },
+      { original: 'Boa noite', translation: 'Good night', pronunciation: 'BOH-ah NOY-chee' },
+      { original: 'Qual é o seu nome?', translation: 'What is your name?', pronunciation: 'kwahl eh oo say-oo NOH-meh' },
+      { original: 'Eu entendo', translation: 'I understand', pronunciation: 'eh-oo en-TEN-doo' },
+    ],
+    ja: [
+      { original: 'こんにちは', translation: 'Hello', pronunciation: 'Konnichiwa' },
+      { original: 'ありがとう', translation: 'Thank you', pronunciation: 'Arigatou' },
+      { original: 'お願いします', translation: 'Please', pronunciation: 'Onegaishimasu' },
+      { original: 'すみません', translation: 'Excuse me/Sorry', pronunciation: 'Sumimasen' },
+      { original: 'はい', translation: 'Yes', pronunciation: 'Hai' },
+      { original: 'いいえ', translation: 'No', pronunciation: 'Iie' },
+      { original: 'おはよう', translation: 'Good morning', pronunciation: 'Ohayou' },
+      { original: 'おやすみ', translation: 'Good night', pronunciation: 'Oyasumi' },
+      { original: 'お名前は？', translation: 'What is your name?', pronunciation: 'Onamae wa?' },
+      { original: 'わかります', translation: 'I understand', pronunciation: 'Wakarimasu' },
+    ],
+  };
+
+  let totalSections = 0;
+  let totalWords = 0;
+
+  for (const language of languages) {
+    const dbLanguage = await db.language.findUnique({
+      where: { code: language.code }
+    });
+
+    if (!dbLanguage) continue;
+
+    const phrases = essentialPhrases[language.code as keyof typeof essentialPhrases];
+    if (!phrases) continue;
+
+    // Create section for this language
+    const section = await db.section.upsert({
+      where: {
+        name_languageId: {
+          name: 'Essential Phrases',
+          languageId: dbLanguage.id
+        }
+      },
+      update: {},
+      create: {
+        name: 'Essential Phrases',
+        description: `Essential ${language.name} phrases for beginners`,
+        isDefault: true,
+        languageId: dbLanguage.id,
       },
     });
-    console.log(`Created default user: ${defaultUser.username}`);
-  } else {
-    console.log(`Default user '${defaultUser.username}' already exists.`);
-  }
 
-  for (const section of defaultSections) {
-    try {
-      const existingSection = await db.section.findUnique({
-        where: { name: section.name },
-      });
+    console.log(`📝 Created section: Essential Phrases for ${language.name}`);
+    totalSections++;
 
-      if (existingSection) {
-        console.log(`Section '${section.name}' already exists. Skipping.`);
-        continue;
-      }
-
-      const createdSection = await db.section.create({
-        data: {
-          name: section.name,
-          description: section.description,
-          isDefault: section.isDefault,
-          words: {
-            create: section.words.map((w) => ({
-              hebrewText: w.hebrew,
-              englishTranslation: w.english,
-              progress: {
-                create: [], // Initialize with empty progress, will be filled if user exists
-              },
-            })),
-          },
-        },
-        include: {
-          words: {
-            include: {
-              progress: true,
-            },
-          },
-        },
-      });
-
-      // After creating words, create UserProgress entries for the default user
-      if (defaultUser) {
-        for (const word of createdSection.words) {
-          const existingProgress = await db.userProgress.findFirst({
-            where: {
-              userId: defaultUser.id,
-              wordId: word.id,
-            },
-          });
-
-          if (!existingProgress) {
-            await db.userProgress.create({
-              data: {
-                userId: defaultUser.id,
-                wordId: word.id,
-                nextReviewDate: new Date(),
-                isManuallyLearned: false, // Default to not manually learned
-              },
-            });
-          }
+    // Create words for this section
+    for (const phrase of phrases) {
+      const existingWord = await db.word.findFirst({
+        where: {
+          originalText: phrase.original,
+          translationText: phrase.translation,
+          sectionId: section.id
         }
+      });
+
+      if (!existingWord) {
+        await db.word.create({
+          data: {
+            originalText: phrase.original,
+            translationText: phrase.translation,
+            pronunciation: phrase.pronunciation,
+            difficulty: 1,
+            sectionId: section.id,
+            languageId: dbLanguage.id,
+          },
+        });
+        totalWords++;
       }
-      console.log(`Created section '${createdSection.name}' with ${createdSection.words.length} words.`);
-    } catch (error) {
-      console.error(`Error creating section '${section.name}':`, error);
     }
+
+    console.log(`✅ Created ${phrases.length} words for ${language.name}`);
   }
 
-  const totalSections = await db.section.count();
-  const totalWords = await db.word.count();
-  console.log(`Seeding complete. Total sections: ${totalSections}, Total words: ${totalWords}.`);
+  console.log('🎉 Multi-language seeding completed!');
+  console.log(`📊 Created ${totalSections} sections and ${totalWords} words across ${languages.length} languages`);
 }
 
 main()
-  .catch(async (e) => {
-    console.error('Error during seeding:', e);
-    await db.$disconnect();
+  .catch((e) => {
+    console.error('❌ Error during seeding:', e);
     process.exit(1);
   })
   .finally(async () => {

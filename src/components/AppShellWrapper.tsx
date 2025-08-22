@@ -95,9 +95,8 @@ export function AppShellWrapper({ children }: { children: React.ReactNode }) {
 
   const navItems = session ? [
     { href: '/dashboard', icon: <IconChartBar size={20} />, label: 'Dashboard' },
-    { href: '/sections', icon: <IconBooks size={20} />, label: 'Learn Hebrew' },
+    { href: '/', icon: <IconBooks size={20} />, label: 'Languages' },
     { href: '/profile', icon: <IconUser size={20} />, label: 'Profile' },
-    { href: '/upload', icon: <IconUpload size={20} />, label: 'Upload Content' },
   ] : [];
 
   return (
@@ -132,8 +131,8 @@ export function AppShellWrapper({ children }: { children: React.ReactNode }) {
               <Text size="xl" fw={700} className="bg-gradient-to-r from-accent to-accent/80 bg-clip-text text-transparent">
                 Ulpan Flashcards
               </Text>
-              <Text size="xs" c="dimmed" className="font-hebrew -mt-1">
-                לימוד עברית
+              <Text size="xs" c="dimmed" className="-mt-1">
+                Multi-Language Learning
               </Text>
             </div>
           </Link>
@@ -212,8 +211,8 @@ export function AppShellWrapper({ children }: { children: React.ReactNode }) {
               <Text size="lg" fw={700} className="bg-gradient-to-r from-accent to-accent/80 bg-clip-text text-transparent">
                 Ulpan Flashcards
               </Text>
-              <Text size="xs" c="dimmed" className="font-hebrew -mt-1">
-                לימוד עברית
+              <Text size="xs" c="dimmed" className="-mt-1">
+                Multi-Language Learning
               </Text>
             </div>
           </Link>

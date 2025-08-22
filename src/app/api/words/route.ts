@@ -79,11 +79,11 @@ const getSectionEnglishTranslations = async (sectionId: number, manuallyLearnedW
         },
       },
       select: {
-        englishTranslation: true,
+        translationText: true,
       },
     })
   );
-  return Array.from(new Set(translations.map(w => w.englishTranslation)));
+  return Array.from(new Set(translations.map(w => w.translationText)));
 };
 
 // Helper function to create default progress object
@@ -152,8 +152,9 @@ export async function GET(request: Request) {
           skip: validatedOffset,
           select: {
             id: true,
-            hebrewText: true,
-            englishTranslation: true,
+            originalText: true,
+            translationText: true,
+            pronunciation: true,
             createdAt: true,
           },
           orderBy: {
@@ -165,8 +166,9 @@ export async function GET(request: Request) {
       return NextResponse.json({
         words: words.map(word => ({
           wordId: word.id,
-          hebrewText: word.hebrewText,
-          englishTranslation: word.englishTranslation,
+          originalText: word.originalText,
+          translationText: word.translationText,
+          pronunciation: word.pronunciation,
           createdAt: word.createdAt
         })),
         totalWords: totalWordsCount,
@@ -243,7 +245,7 @@ export async function GET(request: Request) {
       const fallbackUniqueTranslations = await getSectionEnglishTranslations(parsedSectionId, manuallyLearnedWordIds);
 
       const fallbackFlashcards = fallbackWords.map(word => {
-        const correctTranslation = word.englishTranslation;
+        const correctTranslation = word.translationText;
         const incorrectOptions = fallbackUniqueTranslations
           .filter(t => t !== correctTranslation)
           .sort(() => 0.5 - Math.random())
@@ -266,7 +268,8 @@ export async function GET(request: Request) {
 
         return {
           wordId: word.id,
-          hebrewText: word.hebrewText,
+          originalText: word.originalText,
+          pronunciation: word.pronunciation,
           correctTranslation: correctTranslation,
           options: options,
           level: level,
@@ -288,7 +291,7 @@ export async function GET(request: Request) {
     const uniqueEnglishTranslations = await getSectionEnglishTranslations(parsedSectionId, manuallyLearnedWordIds);
 
     const flashcards = finalWordsToStudy.map(word => {
-      const correctTranslation = word.englishTranslation;
+      const correctTranslation = word.translationText;
       const incorrectOptions = uniqueEnglishTranslations
         .filter(t => t !== correctTranslation)
         .sort(() => 0.5 - Math.random())
@@ -312,7 +315,8 @@ export async function GET(request: Request) {
 
       return {
         wordId: word.id,
-        hebrewText: word.hebrewText,
+        originalText: word.originalText,
+        pronunciation: word.pronunciation,
         correctTranslation: correctTranslation,
         options: options,
         level: level,
@@ -358,11 +362,13 @@ export async function POST(request: Request) {
 
     const validWords = words
       .map(word => ({
-        hebrewText: word.hebrewText?.trim(),
-        englishTranslation: word.englishTranslation?.trim(),
+        originalText: word.originalText?.trim(),
+        translationText: word.translationText?.trim(),
+        pronunciation: word.pronunciation?.trim() || undefined,
         sectionId: parseInt(sectionId),
+        languageId: section.languageId,
       }))
-      .filter(word => word.hebrewText && word.englishTranslation);
+      .filter(word => word.originalText && word.translationText);
 
     if (validWords.length === 0) {
       return NextResponse.json({ message: 'No valid words provided' }, { status: 400 });

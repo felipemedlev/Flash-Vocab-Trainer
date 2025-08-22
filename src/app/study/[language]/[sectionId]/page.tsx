@@ -13,11 +13,14 @@ import {
   Alert,
   Group,
   Badge,
-  Progress
+  Progress,
+  ActionIcon
 } from '@mantine/core';
-import { IconPlayerPlay, IconPlus, IconInfoCircle } from '@tabler/icons-react';
+import { IconPlayerPlay, IconPlus, IconInfoCircle, IconArrowLeft, IconEdit } from '@tabler/icons-react';
 import StudySessionSetup from '@/components/StudySessionSetup';
 import WordInput from '@/components/WordInput';
+import { getLanguageConfig, isValidLanguageCode } from '@/config/languages';
+import { LanguageDisplay } from '@/components/LanguageText';
 
 interface Section {
   id: number;
@@ -25,36 +28,46 @@ interface Section {
   description: string | null;
   totalWords: number;
   learnedWords: number;
+  isDefault: boolean;
+  languageId: number;
 }
 
-export default function StudySetupPage() {
+export default function LanguageStudyPage() {
   const [section, setSection] = useState<Section | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<string | null>('study');
   const params = useParams();
   const router = useRouter();
-  const sectionId = params.sectionId;
+  const sectionId = params.sectionId as string;
+  const language = params.language as string;
   const { status } = useSession();
   const isLoadingRef = useRef(false);
+
+  const languageConfig = getLanguageConfig(language);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/login');
       return;
     }
-  }, [status, router]);
+
+    if (!isValidLanguageCode(language)) {
+      router.push('/');
+      return;
+    }
+  }, [status, language, router]);
 
   const fetchSection = useCallback(async () => {
-    if (!sectionId) {
-      router.replace("/sections");
+    if (!sectionId || !language) {
+      router.replace(`/learn/${language}/sections`);
       return;
     }
     
-    if (status === 'authenticated' && !isLoadingRef.current) {
+    if (status === 'authenticated' && !isLoadingRef.current && isValidLanguageCode(language)) {
       try {
         isLoadingRef.current = true;
         setLoading(true);
-        const response = await fetch(`/api/sections/${sectionId}`);
+        const response = await fetch(`/api/sections/${sectionId}?language=${language}`);
         if (response.ok) {
           const data = await response.json();
           setSection(data);
@@ -66,7 +79,7 @@ export default function StudySetupPage() {
         setLoading(false);
       }
     }
-  }, [sectionId, status, router]);
+  }, [sectionId, language, status, router]);
 
   useEffect(() => {
     fetchSection();
@@ -82,6 +95,16 @@ export default function StudySetupPage() {
 
   if (status === 'unauthenticated') {
     return null; // Will redirect in useEffect
+  }
+
+  if (!languageConfig) {
+    return (
+      <Center h="100vh">
+        <Alert icon={<IconInfoCircle size={16} />} color="red">
+          Language not supported.
+        </Alert>
+      </Center>
+    );
   }
 
   if (!section) {
@@ -102,13 +125,16 @@ export default function StudySetupPage() {
     <Container size="lg" py="xl">
       {/* Header with Back Button */}
       <Group justify="space-between" mb="xl">
-        <Text 
-          variant="subtle" 
-          onClick={() => router.push('/sections')}
-          style={{ cursor: 'pointer', color: '#666' }}
-        >
-          ← Back to Sections
-        </Text>
+        <Group gap="md">
+          <ActionIcon
+            variant="light"
+            size="lg"
+            onClick={() => router.push(`/learn/${language}/sections`)}
+          >
+            <IconArrowLeft size={20} />
+          </ActionIcon>
+          <LanguageDisplay language={language} showFlag={true} />
+        </Group>
         <Badge 
           color={isCompleted ? 'green' : 'blue'} 
           size="lg"
@@ -134,8 +160,13 @@ export default function StudySetupPage() {
               {section.name} 📚
             </Title>
             <Text c="dimmed" size="md">
-              {section.description || "Master essential Hebrew vocabulary"}
+              {section.description || `Master essential ${languageConfig.name} vocabulary`}
             </Text>
+            {section.isDefault && (
+              <Badge color="blue" variant="light" mt="xs">
+                Official Content
+              </Badge>
+            )}
           </div>
         </Group>
 
@@ -170,10 +201,14 @@ export default function StudySetupPage() {
       {/* Main Content */}
       <Paper shadow="md" p="xl" radius="md">
         {activeTab === 'study' ? (
-          <StudySessionSetup sectionId={sectionId as string} />
+          <StudySessionSetup 
+            sectionId={sectionId as string} 
+            language={language}
+          />
         ) : (
           <WordInput 
             sectionId={sectionId as string} 
+            language={language}
             onWordsSaved={() => {
               // Refresh section data after adding words
               window.location.reload();
@@ -201,6 +236,18 @@ export default function StudySetupPage() {
           >
             Add Words
           </Badge>
+          {!section.isDefault && (
+            <Badge
+              variant="outline"
+              size="lg"
+              style={{ cursor: 'pointer' }}
+              onClick={() => router.push(`/learn/${language}/sections/${sectionId}/words/edit`)}
+              leftSection={<IconEdit size={16} />}
+              color="orange"
+            >
+              Edit Words
+            </Badge>
+          )}
         </Group>
       </Paper>
     </Container>

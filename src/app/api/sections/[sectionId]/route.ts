@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from '@/auth';
 import db from "@/lib/db";
+import { isValidLanguageCode } from '@/config/languages';
 
 export async function GET(
   request: NextRequest,
@@ -8,6 +9,8 @@ export async function GET(
 ) {
   const { sectionId } = await context.params;
   const session = await auth();
+  const { searchParams } = new URL(request.url);
+  const languageCode = searchParams.get('language');
 
   if (!session?.user?.id) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
@@ -20,25 +23,49 @@ export async function GET(
     );
   }
 
+  // Validate language if provided
+  if (languageCode && !isValidLanguageCode(languageCode)) {
+    return NextResponse.json({ message: 'Invalid language code' }, { status: 400 });
+  }
+
   try {
     const numericSectionId = parseInt(sectionId, 10);
     if (isNaN(numericSectionId)) {
       return NextResponse.json({ message: 'Invalid section ID' }, { status: 400 });
     }
 
+    // Build where clause
+    let whereClause: any = {
+      AND: [
+        { id: numericSectionId },
+        {
+          OR: [
+            { createdByUserId: parseInt(session.user.id) },
+            { isDefault: true },
+          ],
+        },
+      ],
+    };
+
+    // If language is specified, include it in the filter
+    if (languageCode) {
+      const language = await db.language.findUnique({
+        where: { code: languageCode }
+      });
+
+      if (!language) {
+        return NextResponse.json({ message: 'Language not found' }, { status: 404 });
+      }
+
+      whereClause.AND.push({ languageId: language.id });
+    }
+
     // First get basic section info
     const section = await db.section.findFirst({
-      where: {
-        AND: [
-          { id: numericSectionId },
-          {
-            OR: [
-              { createdByUserId: parseInt(session.user.id) },
-              { isDefault: true },
-            ],
-          },
-        ],
-      },
+      where: whereClause,
+      include: {
+        language: true
+      }
     });
     
     if (!section) {
@@ -78,6 +105,13 @@ export async function GET(
       description: section.description,
       isDefault: section.isDefault,
       createdByUserId: section.createdByUserId,
+      languageId: section.languageId,
+      language: {
+        code: section.language.code,
+        name: section.language.name,
+        nativeName: section.language.nativeName,
+        isRTL: section.language.isRTL
+      },
       createdAt: section.createdAt,
       totalWords,
       learnedWords,

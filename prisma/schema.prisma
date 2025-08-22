@@ -7,6 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Language {
+  id           Int      @id @default(autoincrement())
+  code         String   @unique // "he", "es", "fr", "it", "de", "ru", "zh", "pt", "ja"
+  name         String   // "Hebrew", "Spanish", "French", etc.
+  nativeName   String   // "עברית", "Español", "Français", etc.
+  isRTL        Boolean  @default(false) // Right-to-left languages
+  fontFamily   String?  // Custom font requirements
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  
+  sections     Section[]
+  words        Word[]
+}
+
 model User {
   id            Int              @id @default(autoincrement())
   username      String           @unique
@@ -23,25 +37,38 @@ model User {
 
 model Section {
   id              Int      @id @default(autoincrement())
-  name            String   @unique
+  name            String
   description     String?
   isDefault       Boolean  @default(false)
   createdByUserId Int?
+  languageId      Int      // NEW: Language association
   createdAt       DateTime @default(now())
+  
   createdByUser   User?    @relation(fields: [createdByUserId], references: [id])
+  language        Language @relation(fields: [languageId], references: [id])
   words           Word[]
+  
+  @@unique([name, languageId]) // Unique section names per language
 }
 
 model Word {
   id                 Int            @id @default(autoincrement())
   sectionId          Int
-  hebrewText         String
-  englishTranslation String
+  languageId         Int            // NEW: Direct language reference
+  originalText       String         // Replaces "hebrewText" - the target language
+  translationText    String         // Replaces "englishTranslation" - base language
+  pronunciation      String?        // NEW: For languages like Chinese, Japanese
+  difficulty         Int            @default(1) // 1-5 scale
+  audioUrl           String?        // NEW: For pronunciation support
+  imageUrl           String?        // NEW: Visual learning support
   createdAt          DateTime       @default(now())
+  
   progress           UserProgress[]
   section            Section        @relation(fields: [sectionId], references: [id])
-
+  language           Language       @relation(fields: [languageId], references: [id])
+  
   @@index([sectionId])
+  @@index([languageId])
 }
 
 model UserProgress {

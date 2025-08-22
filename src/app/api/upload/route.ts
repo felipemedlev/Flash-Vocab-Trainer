@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import db from "@/lib/db";
 import * as xlsx from "xlsx";
+import { isValidLanguageCode, getLanguageConfig } from "@/config/languages";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -14,10 +15,28 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const sectionName = formData.get("sectionName") as string;
+    const language = formData.get("language") as string;
+    const description = formData.get("description") as string;
 
-    if (!file || !sectionName) {
+    if (!file || !sectionName || !language) {
       return NextResponse.json(
-        { message: "Missing file or section name" },
+        { message: "Missing file, section name, or language" },
+        { status: 400 }
+      );
+    }
+
+    // Validate language
+    if (!isValidLanguageCode(language)) {
+      return NextResponse.json(
+        { message: "Invalid language code" },
+        { status: 400 }
+      );
+    }
+
+    const languageConfig = getLanguageConfig(language);
+    if (!languageConfig) {
+      return NextResponse.json(
+        { message: "Language not supported" },
         { status: 400 }
       );
     }
@@ -52,9 +71,18 @@ export async function POST(request: Request) {
     }
 
     const headers = data[0].map(header => header.trim().toLowerCase());
-    if (headers[0] !== "hebrew" || headers[1] !== "english") {
+    const expectedLangHeader = languageConfig.name.toLowerCase();
+    
+    if (headers[0] !== expectedLangHeader && headers[0] !== "target" && headers[0] !== languageConfig.code) {
         return NextResponse.json(
-            { message: "Invalid Excel format: Headers must be 'Hebrew' and 'English' in the first two columns." },
+            { message: `Invalid Excel format: First column must be '${languageConfig.name}', 'target', or '${languageConfig.code}'.` },
+            { status: 400 }
+        );
+    }
+    
+    if (headers[1] !== "english" && headers[1] !== "translation") {
+        return NextResponse.json(
+            { message: "Invalid Excel format: Second column must be 'English' or 'translation'." },
             { status: 400 }
         );
     }
@@ -68,16 +96,29 @@ export async function POST(request: Request) {
         );
     }
 
+    // Get language from database
+    const languageRecord = await db.language.findUnique({
+      where: { code: language }
+    });
+
+    if (!languageRecord) {
+      return NextResponse.json(
+        { message: "Language not found in database" },
+        { status: 404 }
+      );
+    }
+
     const seenWords = new Set();
     const words = wordsData.map((row) => {
-        const hebrewText = row[0] ? String(row[0]).trim() : "";
-        const englishTranslation = row[1] ? String(row[1]).trim() : "";
+        const originalText = row[0] ? String(row[0]).trim() : "";
+        const translationText = row[1] ? String(row[1]).trim() : "";
+        const pronunciation = row[2] ? String(row[2]).trim() : undefined; // Optional third column
 
-        if (!hebrewText || !englishTranslation) {
+        if (!originalText || !translationText) {
             return null; // Invalid row, will be filtered out
         }
 
-        const wordKey = `${hebrewText.toLowerCase()}|${englishTranslation.toLowerCase()}`;
+        const wordKey = `${originalText.toLowerCase()}|${translationText.toLowerCase()}`;
         if (seenWords.has(wordKey)) {
             // Duplicate word found, you might want to log this or handle it
             return null;
@@ -85,10 +126,12 @@ export async function POST(request: Request) {
         seenWords.add(wordKey);
 
         return {
-            hebrewText,
-            englishTranslation,
+            originalText,
+            translationText,
+            pronunciation,
+            difficulty: 1, // Default difficulty
         };
-    }).filter((word): word is { hebrewText: string; englishTranslation: string } => word !== null);
+    }).filter((word): word is NonNullable<typeof word> => word !== null);
 
     if (words.length === 0) {
         return NextResponse.json(
@@ -100,15 +143,29 @@ export async function POST(request: Request) {
     const newSection = await db.section.create({
       data: {
         name: sectionName,
+        description: description || null,
         createdByUserId: parseInt(session.user.id),
+        languageId: languageRecord.id,
         words: {
-          create: words,
+          create: words.map(word => ({
+            ...word,
+            languageId: languageRecord.id,
+          })),
         },
       },
     });
 
     return NextResponse.json(
-      { message: "Section created successfully", section: newSection, sectionId: newSection.id },
+      { 
+        message: "Section created successfully", 
+        section: newSection, 
+        sectionId: newSection.id,
+        wordsCount: words.length,
+        language: {
+          code: languageRecord.code,
+          name: languageRecord.name
+        }
+      },
       { status: 201 }
     );
   } catch (error) {

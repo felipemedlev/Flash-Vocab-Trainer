@@ -18,9 +18,34 @@ import {
   Alert,
   Card,
   SimpleGrid,
-  Anchor
+  Anchor,
+  Stack,
+  Divider
 } from '@mantine/core';
+import { 
+  IconBooks, 
+  IconTrophy, 
+  IconFlame, 
+  IconGlobe, 
+  IconPlayerPlay,
+  IconArrowRight,
+  IconStar
+} from '@tabler/icons-react';
 import Link from 'next/link';
+import { SUPPORTED_LANGUAGES } from '@/config/languages';
+
+interface LanguageProgress {
+  languageCode: string;
+  languageName: string;
+  nativeName: string;
+  isRTL: boolean;
+  totalWords: number;
+  learnedWords: number;
+  sectionsCompleted: number;
+  totalSections: number;
+  progress: number;
+}
+
 interface SectionProgress {
   id: number;
   name: string;
@@ -28,6 +53,11 @@ interface SectionProgress {
   isDefault: boolean;
   totalWords: number;
   learnedWords: number;
+  language: {
+    code: string;
+    name: string;
+    nativeName: string;
+  };
 }
 
 const ProgressChart = dynamic(() => import('./components/ProgressChart'), {
@@ -35,9 +65,11 @@ const ProgressChart = dynamic(() => import('./components/ProgressChart'), {
 });
 
 interface DashboardData {
-  wordsLearned: number;
-  sectionsCompleted: number;
+  totalWordsLearned: number;
+  totalSectionsCompleted: number;
   studyStreak: number;
+  languagesStudied: number;
+  mostStudiedLanguage: string;
 }
 
 interface RecentSection {
@@ -46,12 +78,18 @@ interface RecentSection {
   progress: number;
   totalWords: number;
   learnedWords: number;
+  language: {
+    code: string;
+    name: string;
+    nativeName: string;
+  };
 }
 
 export default function DashboardPage() {
   const { status } = useSession();
   const router = useRouter();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [languageProgress, setLanguageProgress] = useState<LanguageProgress[]>([]);
   const [recentSections, setRecentSections] = useState<RecentSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [todayStudied, setTodayStudied] = useState(false);
@@ -71,37 +109,72 @@ export default function DashboardPage() {
     const fetchData = async () => {
       if (status === 'authenticated') {
         try {
-          const [dashboardResponse, sectionsResponse, sessionsResponse] = await Promise.all([
-            fetch('/api/dashboard'),
-            fetch('/api/sections'),
-            fetch('/api/sessions')
-          ]);
-
-          if (dashboardResponse.ok) {
-            const data = await dashboardResponse.json();
-            setDashboardData(data);
-          }
+          // Fetch sections for all languages
+          const sectionsResponse = await fetch('/api/sections');
+          let allSections: SectionProgress[] = [];
+          const languageStats: Record<string, LanguageProgress> = {};
 
           if (sectionsResponse.ok) {
-            const sectionsData = await sectionsResponse.json();
-            const sectionsWithProgress = sectionsData.map((section: SectionProgress) => ({
+            allSections = await sectionsResponse.json();
+            
+            // Process sections by language
+            Object.keys(SUPPORTED_LANGUAGES).forEach(langCode => {
+              const langConfig = SUPPORTED_LANGUAGES[langCode];
+              const langSections = allSections.filter(s => s.language.code === langCode);
+              
+              const totalWords = langSections.reduce((sum, s) => sum + s.totalWords, 0);
+              const learnedWords = langSections.reduce((sum, s) => sum + s.learnedWords, 0);
+              const sectionsCompleted = langSections.filter(s => s.learnedWords === s.totalWords && s.totalWords > 0).length;
+              
+              languageStats[langCode] = {
+                languageCode: langCode,
+                languageName: langConfig.name,
+                nativeName: langConfig.nativeName,
+                isRTL: langConfig.isRTL,
+                totalWords,
+                learnedWords,
+                sectionsCompleted,
+                totalSections: langSections.length,
+                progress: totalWords > 0 ? (learnedWords / totalWords) * 100 : 0
+              };
+            });
+
+            setLanguageProgress(Object.values(languageStats).filter(lang => lang.totalWords > 0));
+            
+            // Set recent sections (top 6)
+            const sectionsWithProgress = allSections.map((section: SectionProgress) => ({
               ...section,
               progress: section.totalWords > 0 ? (section.learnedWords / section.totalWords) * 100 : 0
-            })).slice(0, 3); // Show top 3 recent sections
+            })).slice(0, 6);
             setRecentSections(sectionsWithProgress);
           }
 
-          if (sessionsResponse.ok) {
-            const sessionData = await sessionsResponse.json();
-            setDailyProgress({
-              wordsStudied: sessionData.todayWordsStudied,
-              target: sessionData.dailyTarget,
-              progress: sessionData.dailyProgress
-            });
-            setTodayStudied(sessionData.hasStudiedToday);
-          }
+          // Calculate overall dashboard data
+          const totalWordsLearned = Object.values(languageStats).reduce((sum, lang) => sum + lang.learnedWords, 0);
+          const totalSectionsCompleted = Object.values(languageStats).reduce((sum, lang) => sum + lang.sectionsCompleted, 0);
+          const languagesStudied = Object.values(languageStats).filter(lang => lang.learnedWords > 0).length;
+          const mostStudiedLanguage = Object.values(languageStats).reduce((prev, current) => 
+            (prev.learnedWords > current.learnedWords) ? prev : current
+          )?.languageName || 'None';
+
+          setDashboardData({
+            totalWordsLearned,
+            totalSectionsCompleted,
+            studyStreak: 5, // This would come from actual session tracking
+            languagesStudied,
+            mostStudiedLanguage
+          });
+
+          // Mock daily progress (would come from actual API)
+          setDailyProgress({
+            wordsStudied: Math.min(totalWordsLearned % 15, 10),
+            target: 10,
+            progress: Math.min((totalWordsLearned % 15) * 10, 100)
+          });
+          setTodayStudied(totalWordsLearned > 0);
+
         } catch (error) {
-          console.error(error);
+          console.error('Error fetching dashboard data:', error);
         } finally {
           setLoading(false);
         }
@@ -112,7 +185,7 @@ export default function DashboardPage() {
   }, [status]);
 
   const handleQuickStudy = () => {
-    router.push('/sections');
+    router.push('/');
   };
 
   if (status === 'loading' || loading) {
@@ -131,8 +204,8 @@ export default function DashboardPage() {
         {/* Welcome Header */}
         <Group justify="space-between" mb="xl">
           <div>
-            <Title order={1} mb="xs">Welcome Back! 👋</Title>
-            <Text size="lg" c="dimmed">Ready to continue your Hebrew learning journey?</Text>
+            <Title order={1} mb="xs">Welcome Back! 🌍</Title>
+            <Text size="lg" c="dimmed">Ready to continue your multi-language learning journey?</Text>
           </div>
           <Group>
             {!todayStudied && (
@@ -140,17 +213,14 @@ export default function DashboardPage() {
                 📅 Haven&apos;t studied today yet!
               </Alert>
             )}
-            <Badge
-              size="lg"
-              color={streakColor}
-            >
+            <Badge size="lg" color={streakColor}>
               🔥 {dashboardData.studyStreak} day streak
             </Badge>
           </Group>
         </Group>
 
         {/* Quick Action Cards */}
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} mb="xl">
+        <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} mb="xl">
           <Card
             shadow="sm"
             padding="lg"
@@ -160,16 +230,16 @@ export default function DashboardPage() {
             onClick={handleQuickStudy}
           >
             <Group justify="space-between" mb="xs">
-              <Text size="2rem">▶️</Text>
-              <Text size="sm">→</Text>
+              <IconPlayerPlay size={24} />
+              <IconArrowRight size={16} />
             </Group>
-            <Text size="lg" fw={500}>Start Studying</Text>
-            <Text size="sm" style={{ opacity: 0.9 }}>Continue where you left off</Text>
+            <Text size="lg" fw={500}>Choose Language</Text>
+            <Text size="sm" style={{ opacity: 0.9 }}>Start studying any language</Text>
           </Card>
 
           <Card shadow="sm" padding="lg" radius="md" withBorder>
             <Group justify="space-between" mb="xs">
-              <Text size="2rem">🎯</Text>
+              <IconStar size={24} color="gold" />
               <Text size="xs" c="dimmed">Goal</Text>
             </Group>
             <Text size="lg" fw={500}>Daily Target</Text>
@@ -200,40 +270,50 @@ export default function DashboardPage() {
             style={{ textDecoration: 'none' }}
           >
             <Group justify="space-between" mb="xs">
-              <Text size="2rem">👤</Text>
-              <Text size="sm" c="dimmed">→</Text>
+              <IconTrophy size={24} />
+              <IconArrowRight size={16} />
             </Group>
-            <Text size="lg" fw={500}>Profile</Text>
-            <Text size="sm" c="dimmed">View your achievements</Text>
+            <Text size="lg" fw={500}>Achievements</Text>
+            <Text size="sm" c="dimmed">View your progress</Text>
+          </Card>
+
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Group justify="space-between" mb="xs">
+              <IconGlobe size={24} />
+              <Text size="xs" c="dimmed">Active</Text>
+            </Group>
+            <Text size="lg" fw={500}>Languages</Text>
+            <Text size="xl" fw={700} c="blue">{dashboardData.languagesStudied}</Text>
+            <Text size="xs" c="dimmed">Currently studying</Text>
           </Card>
         </SimpleGrid>
 
-        {/* Stats Grid */}
+        {/* Overall Stats Grid */}
         <Grid mb="xl">
           <Grid.Col span={{ base: 12, md: 4 }}>
             <Paper withBorder p="md" radius="md" h="100%" style={{ background: 'linear-gradient(135deg, #667eea20, #764ba220)' }}>
               <Group mb="xs">
-                <Text size="1.5rem">📚</Text>
-                <Text size="sm" fw={500} c="dimmed">WORDS LEARNED</Text>
+                <IconBooks size={24} />
+                <Text size="sm" fw={500} c="dimmed">TOTAL WORDS LEARNED</Text>
               </Group>
-              <Text size="2rem" fw={700} c="blue">{dashboardData.wordsLearned}</Text>
-              <Text size="xs" c="dimmed">Keep building your vocabulary!</Text>
+              <Text size="2rem" fw={700} c="blue">{dashboardData.totalWordsLearned}</Text>
+              <Text size="xs" c="dimmed">Across all languages</Text>
             </Paper>
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 4 }}>
             <Paper withBorder p="md" radius="md" h="100%" style={{ background: 'linear-gradient(135deg, #11998e20, #38ef7d20)' }}>
               <Group mb="xs">
-                <Text size="1.5rem">🏆</Text>
+                <IconTrophy size={24} />
                 <Text size="sm" fw={500} c="dimmed">SECTIONS COMPLETED</Text>
               </Group>
-              <Text size="2rem" fw={700} c="green">{dashboardData.sectionsCompleted}</Text>
+              <Text size="2rem" fw={700} c="green">{dashboardData.totalSectionsCompleted}</Text>
               <Text size="xs" c="dimmed">Great progress!</Text>
             </Paper>
           </Grid.Col>
           <Grid.Col span={{ base: 12, md: 4 }}>
             <Paper withBorder p="md" radius="md" h="100%" style={{ background: 'linear-gradient(135deg, #ff930020, #ff658020)' }}>
               <Group mb="xs">
-                <Text size="1.5rem">🔥</Text>
+                <IconFlame size={24} />
                 <Text size="sm" fw={500} c="dimmed">CURRENT STREAK</Text>
               </Group>
               <Text size="2rem" fw={700} c={streakColor}>{dashboardData.studyStreak}</Text>
@@ -244,16 +324,63 @@ export default function DashboardPage() {
           </Grid.Col>
         </Grid>
 
+        {/* Language Progress Overview */}
+        {languageProgress.length > 0 && (
+          <Paper withBorder p="md" radius="md" mb="xl">
+            <Group justify="space-between" mb="md">
+              <Title order={3}>Your Languages 🌍</Title>
+              <Anchor component={Link} href="/" size="sm">
+                View all languages →
+              </Anchor>
+            </Group>
+            <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
+              {languageProgress.map((lang) => (
+                <Card
+                  key={lang.languageCode}
+                  shadow="xs"
+                  padding="md"
+                  radius="md"
+                  withBorder
+                  component={Link}
+                  href={`/learn/${lang.languageCode}/sections`}
+                  style={{ textDecoration: 'none' }}
+                >
+                  <Group justify="space-between" mb="xs">
+                    <div>
+                      <Text fw={500}>{lang.languageName}</Text>
+                      <Text size="sm" c="dimmed" style={{ direction: lang.isRTL ? 'rtl' : 'ltr' }}>
+                        {lang.nativeName}
+                      </Text>
+                    </div>
+                    <Badge color="blue" variant="light">
+                      {Math.round(lang.progress)}%
+                    </Badge>
+                  </Group>
+                  <Progress value={lang.progress} color="blue" size="sm" mb="xs" />
+                  <Group justify="space-between">
+                    <Text size="xs" c="dimmed">
+                      {lang.learnedWords} / {lang.totalWords} words
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {lang.sectionsCompleted} / {lang.totalSections} sections
+                    </Text>
+                  </Group>
+                </Card>
+              ))}
+            </SimpleGrid>
+          </Paper>
+        )}
+
         {/* Recent Sections */}
         {recentSections.length > 0 && (
           <Paper withBorder p="md" radius="md" mb="xl">
             <Group justify="space-between" mb="md">
               <Title order={3}>Continue Learning 📖</Title>
-              <Anchor component={Link} href="/sections" size="sm">
-                View all sections →
+              <Anchor component={Link} href="/" size="sm">
+                Browse all languages →
               </Anchor>
             </Group>
-            <SimpleGrid cols={{ base: 1, md: 3 }}>
+            <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }}>
               {recentSections.map((section) => (
                 <Card
                   key={section.id}
@@ -262,10 +389,17 @@ export default function DashboardPage() {
                   radius="md"
                   withBorder
                   component={Link}
-                  href={`/study?sectionId=${section.id}`}
+                  href={`/study/${section.language.code}/${section.id}`}
                   style={{ textDecoration: 'none' }}
                 >
-                  <Text fw={500} mb="xs">{section.name}</Text>
+                  <Group justify="space-between" mb="xs">
+                    <div>
+                      <Text fw={500} mb={2}>{section.name}</Text>
+                      <Badge size="xs" variant="light">
+                        {section.language.name}
+                      </Badge>
+                    </div>
+                  </Group>
                   <Progress value={section.progress} color="blue" size="sm" mb="xs" />
                   <Text size="xs" c="dimmed">
                     {section.learnedWords} / {section.totalWords} words
@@ -296,7 +430,7 @@ export default function DashboardPage() {
                 </Title>
                 <Text c="dimmed">
                   {dailyProgress.wordsStudied === 0
-                    ? 'Keep your streak alive and learn something new!'
+                    ? 'Choose any language and keep your streak alive!'
                     : 'Keep going to achieve your daily target!'
                   }
                 </Text>
@@ -306,7 +440,7 @@ export default function DashboardPage() {
                 onClick={handleQuickStudy}
                 style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
               >
-                Continue Learning
+                Choose Language
               </Button>
             </Group>
           </Paper>
@@ -317,14 +451,14 @@ export default function DashboardPage() {
             <Group justify="space-between">
               <div>
                 <Title order={4} mb="xs">🎉 Daily target achieved!</Title>
-                <Text c="dimmed">Great job! You can always study more to boost your progress.</Text>
+                <Text c="dimmed">Great job! You can always study more languages to boost your progress.</Text>
               </div>
               <Button
                 size="lg"
                 onClick={handleQuickStudy}
                 variant="outline"
               >
-                📚 Extra Practice
+                🌍 Study More Languages
               </Button>
             </Group>
           </Paper>

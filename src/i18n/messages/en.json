@@ -1,0 +1,89 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "learn": "Learn {language}",
+    "sections": "Sections",
+    "profile": "Profile",
+    "upload": "Upload Content",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Get Started"
+  },
+  "languages": {
+    "hebrew": "Hebrew",
+    "spanish": "Spanish", 
+    "french": "French",
+    "italian": "Italian",
+    "german": "German",
+    "russian": "Russian",
+    "chinese": "Chinese",
+    "portuguese": "Portuguese",
+    "japanese": "Japanese"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "confirm": "Confirm",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning"
+  },
+  "pages": {
+    "home": {
+      "title": "Master Languages with Smart Flashcards",
+      "subtitle": "Transform your language learning journey with our intelligent flashcard system.",
+      "description": "Upload custom Excel files, leverage AI-powered spaced repetition, and track your progress with detailed analytics.",
+      "startLearning": "Start Learning Now",
+      "createAccount": "Create Free Account",
+      "startStudying": "Start Studying",
+      "dashboard": "Dashboard",
+      "uploadExcel": "Upload Excel"
+    },
+    "dashboard": {
+      "welcome": "Welcome Back!",
+      "subtitle": "Ready to continue your language learning journey?",
+      "wordsLearned": "Words Learned",
+      "sectionsCompleted": "Sections Completed", 
+      "currentStreak": "Current Streak",
+      "dailyTarget": "Daily Target",
+      "startStudying": "Start Studying",
+      "profile": "Profile",
+      "continueLearning": "Continue Learning",
+      "extraPractice": "Extra Practice"
+    },
+    "sections": {
+      "title": "Choose a Section",
+      "description": "Select a section to start learning",
+      "totalWords": "Total Words",
+      "learned": "Learned",
+      "toLearn": "To Learn",
+      "startStudy": "Start Study",
+      "viewWords": "View Words",
+      "editWords": "Edit Words",
+      "addWords": "Add Words"
+    },
+    "study": {
+      "session": "Study Session",
+      "completion": "Session Complete!",
+      "wordsStudied": "Words Studied",
+      "accuracy": "Accuracy",
+      "continue": "Continue Learning",
+      "newSession": "New Session"
+    }
+  },
+  "forms": {
+    "validation": {
+      "required": "This field is required",
+      "email": "Please enter a valid email",
+      "password": "Password must be at least 6 characters",
+      "passwordMatch": "Passwords must match"
+    }
+  }
+}
