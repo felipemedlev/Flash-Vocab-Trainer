@@ -1,7 +1,3 @@
-// Prisma schema for Hebrew Flashcard Learning System
-// Defines Users, Sections, Words, UserProgress, SessionHistory tables
-// Always keep files under 500 lines
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,17 +8,17 @@ datasource db {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  username     String   @unique
-  email        String   @unique
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  sections     Section[]
-  progress     UserProgress[]
-  sessions     SessionHistory[]
-  currentStreak Int    @default(0)
-  longestStreak Int    @default(0)
+  id            Int              @id @default(autoincrement())
+  username      String           @unique
+  email         String           @unique
+  passwordHash  String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  currentStreak Int              @default(0)
+  longestStreak Int              @default(0)
+  sections      Section[]
+  sessions      SessionHistory[]
+  progress      UserProgress[]
 }
 
 model Section {
@@ -31,46 +27,44 @@ model Section {
   description     String?
   isDefault       Boolean  @default(false)
   createdByUserId Int?
-  createdByUser   User?    @relation(fields: [createdByUserId], references: [id])
   createdAt       DateTime @default(now())
+  createdByUser   User?    @relation(fields: [createdByUserId], references: [id])
   words           Word[]
 }
 
 model Word {
-  id                Int      @id @default(autoincrement())
-  sectionId         Int
-  section           Section  @relation(fields: [sectionId], references: [id])
-  hebrewText        String
+  id                 Int            @id @default(autoincrement())
+  sectionId          Int
+  hebrewText         String
   englishTranslation String
-  createdAt         DateTime @default(now())
-  progress          UserProgress[]
+  createdAt          DateTime       @default(now())
+  progress           UserProgress[]
+  section            Section        @relation(fields: [sectionId], references: [id])
 
   @@index([sectionId])
 }
 
 model UserProgress {
-  id                Int      @id @default(autoincrement())
-  userId            Int
-  wordId            Int
-  user              User     @relation(fields: [userId], references: [id])
-  word              Word     @relation(fields: [wordId], references: [id])
-  correctCount      Int      @default(0)
-  incorrectCount    Int      @default(0)
-  consecutiveCorrect Int     @default(0)
-  lastSeen          DateTime?
-  timesSeen         Int      @default(0)
-  isManuallyLearned Boolean  @default(false)
-  
-  // SM-2 Algorithm fields
-  easinessFactor    Float    @default(2.5)  // SM-2 easiness factor (1.3-2.5)
-  interval          Int      @default(1)    // Days until next review
-  repetition        Int      @default(0)    // Number of successful repetitions
-  nextReviewDate    DateTime @default(now()) // When to show this word next
-  quality           Int?     // Last quality rating (0-5)
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                 Int       @id @default(autoincrement())
+  userId             Int
+  wordId             Int
+  correctCount       Int       @default(0)
+  incorrectCount     Int       @default(0)
+  consecutiveCorrect Int       @default(0)
+  lastSeen           DateTime?
+  timesSeen          Int       @default(0)
+  isManuallyLearned  Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  easinessFactor     Float     @default(2.5)
+  interval           Int       @default(1)
+  nextReviewDate     DateTime  @default(now())
+  quality            Int?
+  repetition         Int       @default(0)
+  user               User      @relation(fields: [userId], references: [id])
+  word               Word      @relation(fields: [wordId], references: [id])
 
+  @@unique([userId, wordId])
   @@index([userId])
   @@index([wordId])
   @@index([nextReviewDate])
@@ -79,9 +73,9 @@ model UserProgress {
 model SessionHistory {
   id             Int      @id @default(autoincrement())
   userId         Int
-  user           User     @relation(fields: [userId], references: [id])
   sessionDate    DateTime @default(now())
   wordsStudied   Int
   correctAnswers Int
   sessionLength  Int
+  user           User     @relation(fields: [userId], references: [id])
 }

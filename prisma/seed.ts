@@ -254,6 +254,21 @@ const defaultSections = [
 async function main() {
   console.log('Starting database seeding...');
 
+  // Ensure a default user exists
+  let defaultUser = await db.user.findFirst();
+  if (!defaultUser) {
+    defaultUser = await db.user.create({
+      data: {
+        username: 'defaultuser',
+        email: 'default@example.com',
+        passwordHash: 'hashedpassword', // In a real app, this would be a proper hash
+      },
+    });
+    console.log(`Created default user: ${defaultUser.username}`);
+  } else {
+    console.log(`Default user '${defaultUser.username}' already exists.`);
+  }
+
   for (const section of defaultSections) {
     try {
       const existingSection = await db.section.findUnique({
@@ -274,13 +289,43 @@ async function main() {
             create: section.words.map((w) => ({
               hebrewText: w.hebrew,
               englishTranslation: w.english,
+              progress: {
+                create: [], // Initialize with empty progress, will be filled if user exists
+              },
             })),
           },
         },
         include: {
-          words: true,
+          words: {
+            include: {
+              progress: true,
+            },
+          },
         },
       });
+
+      // After creating words, create UserProgress entries for the default user
+      if (defaultUser) {
+        for (const word of createdSection.words) {
+          const existingProgress = await db.userProgress.findFirst({
+            where: {
+              userId: defaultUser.id,
+              wordId: word.id,
+            },
+          });
+
+          if (!existingProgress) {
+            await db.userProgress.create({
+              data: {
+                userId: defaultUser.id,
+                wordId: word.id,
+                nextReviewDate: new Date(),
+                isManuallyLearned: false, // Default to not manually learned
+              },
+            });
+          }
+        }
+      }
       console.log(`Created section '${createdSection.name}' with ${createdSection.words.length} words.`);
     } catch (error) {
       console.error(`Error creating section '${section.name}':`, error);
