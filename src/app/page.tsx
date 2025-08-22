@@ -91,11 +91,11 @@ export default function Home() {
                   >
                     ✨ AI-Powered Hebrew Learning
                   </Box>
-                  
-                  <Title 
-                    order={1} 
+
+                  <Title
+                    order={1}
                     mb="lg"
-                    style={{ 
+                    style={{
                       color: '#1F2937',
                       fontWeight: 900,
                       lineHeight: 1.1,
@@ -106,7 +106,7 @@ export default function Home() {
                   >
                     Master Hebrew with
                     <br />
-                    <span style={{ 
+                    <span style={{
                       background: 'linear-gradient(135deg, #3B82F6, #A855F7, #22C55E)',
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
@@ -115,11 +115,11 @@ export default function Home() {
                       Smart Flashcards
                     </span>
                   </Title>
-                  
-                  <Text 
+
+                  <Text
                     size="xl"
                     mb="xl"
-                    style={{ 
+                    style={{
                       color: '#6B7280',
                       maxWidth: '750px',
                       lineHeight: 1.7,
@@ -130,8 +130,8 @@ export default function Home() {
                       fontSize: 'clamp(1.1rem, 2.8vw, 1.35rem)'
                     }}
                   >
-                    Transform your Hebrew learning journey with our intelligent flashcard system. 
-                    Upload custom Excel files, leverage AI-powered spaced repetition, and track 
+                    Transform your Hebrew learning journey with our intelligent flashcard system.
+                    Upload custom Excel files, leverage AI-powered spaced repetition, and track
                     your progress with detailed analytics.
                   </Text>
                 </Box>
@@ -266,7 +266,7 @@ export default function Home() {
                         e.currentTarget.style.boxShadow = '0 10px 30px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.3)';
                       }}
                     >
-                      🚀 Start Learning Now
+                      Start Learning Now
                     </Button>
                     <Button
                       component={Link}
@@ -328,13 +328,13 @@ export default function Home() {
 
             <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="xl">
             {features.map((feature, index) => (
-              <Card 
-                key={index} 
-                shadow="sm" 
-                padding="xl" 
-                radius="md" 
+              <Card
+                key={index}
+                shadow="sm"
+                padding="xl"
+                radius="md"
                 withBorder
-                style={{ 
+                style={{
                   background: 'linear-gradient(135deg, rgb(253, 253, 253) 0%, rgba(255,255,255,0.05) 100%)',
                   backdropFilter: 'blur(10px)',
                   border: '1px solid rgba(255,255,255,0.2)'
@@ -393,11 +393,11 @@ export default function Home() {
 
       {/* CTA Section */}
       <Container size="xl" py={30}>
-        <Paper 
-          withBorder 
-          p="xl" 
-          radius="lg" 
-          style={{ 
+        <Paper
+          withBorder
+          p="xl"
+          radius="lg"
+          style={{
             background: 'linear-gradient(135deg, #667eea10, #764ba210)',
             textAlign: 'center'
           }}
@@ -407,18 +407,18 @@ export default function Home() {
               Ready to Master Hebrew? 🎯
             </Title>
             <Text size="lg" c="dimmed" style={{ maxWidth: '500px', margin: '0 auto' }}>
-              Join thousands of learners who have already improved their Hebrew vocabulary 
+              Join thousands of learners who have already improved their Hebrew vocabulary
               with our proven flashcard system.
             </Text>
             <Group justify="center" gap="md">
               {session ? (
-                <Button 
-                  component={Link} 
-                  href="/study" 
-                  size="lg" 
+                <Button
+                  component={Link}
+                  href="/study"
+                  size="lg"
                   radius="xl"
                   leftSection={<IconCheck size={20} />}
-                  style={{ 
+                  style={{
                     background: 'linear-gradient(135deg, #11998e, #38ef7d)',
                     boxShadow: '0 4px 16px rgba(17, 153, 142, 0.3)'
                   }}
@@ -427,24 +427,24 @@ export default function Home() {
                 </Button>
               ) : (
                 <>
-                  <Button 
-                    component={Link} 
-                    href="/auth/register" 
-                    size="lg" 
+                  <Button
+                    component={Link}
+                    href="/auth/register"
+                    size="lg"
                     radius="xl"
                     leftSection={<IconRocket size={20} />}
-                    style={{ 
+                    style={{
                       background: 'linear-gradient(135deg, #11998e, #38ef7d)',
                       boxShadow: '0 4px 16px rgba(17, 153, 142, 0.3)'
                     }}
                   >
                     Get Started Free
                   </Button>
-                  <Button 
-                    component={Link} 
-                    href="/auth/login" 
-                    variant="outline" 
-                    size="lg" 
+                  <Button
+                    component={Link}
+                    href="/auth/login"
+                    variant="outline"
+                    size="lg"
                     radius="xl"
                   >
                     Already have an account?

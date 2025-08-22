@@ -76,12 +76,12 @@ export default function DashboardPage() {
             fetch('/api/sections'),
             fetch('/api/sessions')
           ]);
-          
+
           if (dashboardResponse.ok) {
             const data = await dashboardResponse.json();
             setDashboardData(data);
           }
-          
+
           if (sectionsResponse.ok) {
             const sectionsData = await sectionsResponse.json();
             const sectionsWithProgress = sectionsData.map((section: SectionProgress) => ({
@@ -125,7 +125,7 @@ export default function DashboardPage() {
 
   if (status === 'authenticated' && dashboardData) {
     const streakColor = dashboardData.studyStreak >= 7 ? 'green' : dashboardData.studyStreak >= 3 ? 'orange' : 'blue';
-    
+
     return (
       <Container size="xl">
         {/* Welcome Header */}
@@ -140,8 +140,8 @@ export default function DashboardPage() {
                 📅 Haven&apos;t studied today yet!
               </Alert>
             )}
-            <Badge 
-              size="lg" 
+            <Badge
+              size="lg"
               color={streakColor}
             >
               🔥 {dashboardData.studyStreak} day streak
@@ -151,10 +151,10 @@ export default function DashboardPage() {
 
         {/* Quick Action Cards */}
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} mb="xl">
-          <Card 
-            shadow="sm" 
-            padding="lg" 
-            radius="md" 
+          <Card
+            shadow="sm"
+            padding="lg"
+            radius="md"
             withBorder
             style={{ cursor: 'pointer', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}
             onClick={handleQuickStudy}
@@ -173,15 +173,15 @@ export default function DashboardPage() {
               <Text size="xs" c="dimmed">Goal</Text>
             </Group>
             <Text size="lg" fw={500}>Daily Target</Text>
-            <Progress 
-              value={dailyProgress.progress} 
-              color={dailyProgress.progress >= 100 ? "green" : "blue"} 
-              size="sm" 
-              mt="xs" 
+            <Progress
+              value={dailyProgress.progress}
+              color={dailyProgress.progress >= 100 ? "green" : "blue"}
+              size="sm"
+              mt="xs"
             />
             <Text size="xs" c="dimmed" mt="xs">
-              {dailyProgress.progress >= 100 
-                ? '✅ Target achieved!' 
+              {dailyProgress.progress >= 100
+                ? '✅ Target achieved!'
                 : `${Math.max(0, dailyProgress.target - dailyProgress.wordsStudied)} words remaining`
               }
             </Text>
@@ -190,10 +190,10 @@ export default function DashboardPage() {
             </Text>
           </Card>
 
-          <Card 
-            shadow="sm" 
-            padding="lg" 
-            radius="md" 
+          <Card
+            shadow="sm"
+            padding="lg"
+            radius="md"
             withBorder
             component={Link}
             href="/profile"
@@ -255,11 +255,11 @@ export default function DashboardPage() {
             </Group>
             <SimpleGrid cols={{ base: 1, md: 3 }}>
               {recentSections.map((section) => (
-                <Card 
-                  key={section.id} 
-                  shadow="xs" 
-                  padding="md" 
-                  radius="md" 
+                <Card
+                  key={section.id}
+                  shadow="xs"
+                  padding="md"
+                  radius="md"
                   withBorder
                   component={Link}
                   href={`/study?sectionId=${section.id}`}
@@ -289,29 +289,29 @@ export default function DashboardPage() {
             <Group justify="space-between">
               <div>
                 <Title order={4} mb="xs">
-                  {dailyProgress.wordsStudied === 0 
-                    ? 'Ready to start today? 🧠' 
+                  {dailyProgress.wordsStudied === 0
+                    ? 'Ready to start today? 🧠'
                     : `You're ${dailyProgress.target - dailyProgress.wordsStudied} words away from your goal! 🎯`
                   }
                 </Title>
                 <Text c="dimmed">
-                  {dailyProgress.wordsStudied === 0 
-                    ? 'Keep your streak alive and learn something new!' 
+                  {dailyProgress.wordsStudied === 0
+                    ? 'Keep your streak alive and learn something new!'
                     : 'Keep going to achieve your daily target!'
                   }
                 </Text>
               </div>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 onClick={handleQuickStudy}
                 style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
               >
-                🚀 Continue Learning
+                Continue Learning
               </Button>
             </Group>
           </Paper>
         )}
-        
+
         {dailyProgress.progress >= 100 && (
           <Paper withBorder p="lg" radius="md" style={{ background: 'linear-gradient(45deg, #e8f5e8, #f0f8ff)' }}>
             <Group justify="space-between">
@@ -319,8 +319,8 @@ export default function DashboardPage() {
                 <Title order={4} mb="xs">🎉 Daily target achieved!</Title>
                 <Text c="dimmed">Great job! You can always study more to boost your progress.</Text>
               </div>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 onClick={handleQuickStudy}
                 variant="outline"
               >

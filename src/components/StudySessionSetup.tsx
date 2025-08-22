@@ -24,10 +24,10 @@ export default function StudySessionSetup({ sectionId }: StudySessionSetupProps)
   const handleStartSession = () => {
     if (isNavigating) return; // Prevent double navigation
     setIsNavigating(true);
-    
+
     // Validate session length to prevent performance issues
     const validatedLength = Math.min(parseInt(sessionLength), 100);
-    
+
     const sessionUrl = `/study/flashcard?sectionId=${sectionId}&length=${validatedLength}`;
     router.push(sessionUrl);
   };
@@ -41,13 +41,13 @@ export default function StudySessionSetup({ sectionId }: StudySessionSetupProps)
       <Text size="xl" fw={700} ta="center" mb="md" style={{ color: '#1f2937' }}>
         🚀 Start Your Study Session
       </Text>
-      
-      <Paper 
-        shadow="sm" 
-        p="xl" 
-        radius="md" 
+
+      <Paper
+        shadow="sm"
+        p="xl"
+        radius="md"
         withBorder
-        style={{ 
+        style={{
           background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 197, 253, 0.05))',
           border: '1px solid rgba(59, 130, 246, 0.1)',
           maxWidth: '400px',
@@ -117,9 +117,9 @@ export default function StudySessionSetup({ sectionId }: StudySessionSetupProps)
             }
           }}
         >
-          {isNavigating ? 'Starting...' : '🚀 Start Session'}
+          {isNavigating ? 'Starting...' : 'Start Session'}
         </Button>
-        
+
         <Button
           leftSection={<IconEye size={20} />}
           size="lg"
@@ -144,7 +144,7 @@ export default function StudySessionSetup({ sectionId }: StudySessionSetupProps)
             e.currentTarget.style.boxShadow = 'none';
           }}
         >
-          👁️ View All Words
+          View All Words
         </Button>
       </Group>
     </Stack>
