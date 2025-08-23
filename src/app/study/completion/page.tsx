@@ -44,7 +44,7 @@ function SessionCompletionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
-  
+
   const [sessionStats, setSessionStats] = useState<SessionStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -161,7 +161,7 @@ function SessionCompletionContent() {
   return (
     <Container size="md">
       {/* Celebration Header */}
-      <Paper withBorder p="xl" radius="md" mb="xl" style={{ 
+      <Paper withBorder p="xl" radius="md" mb="xl" style={{
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         color: 'white',
         textAlign: 'center'
@@ -204,7 +204,7 @@ function SessionCompletionContent() {
 
       {/* Words Learned This Session */}
       {(sessionStats.wordsLearnedInSession || 0) > 0 && (
-        <Paper withBorder p="lg" radius="md" mb="xl" style={{ 
+        <Paper withBorder p="lg" radius="md" mb="xl" style={{
           background: 'linear-gradient(135deg, #e8f5e8, #f0f8ff)',
           textAlign: 'center'
         }}>
@@ -226,7 +226,7 @@ function SessionCompletionContent() {
         <Alert color="blue" variant="light" mb="xl">
           <Text fw={500} mb="xs">📚 Keep Building Your Knowledge!</Text>
           <Text size="sm">
-            {`While you didn't master any new words this session, you're reinforcing your existing knowledge. 
+            {`While you didn't master any new words this session, you're reinforcing your existing knowledge.
             Consistent practice with our spaced repetition system will help you retain what you've learned!`}
           </Text>
         </Alert>
@@ -252,7 +252,7 @@ function SessionCompletionContent() {
       {/* Performance Analysis */}
       <Paper withBorder p="lg" radius="md" mb="xl">
         <Title order={3} mb="md">📊 Session Analysis</Title>
-        
+
         <Stack gap="md">
           <div>
             <Group justify="space-between" mb="xs">
@@ -261,11 +261,11 @@ function SessionCompletionContent() {
                 {sessionStats.accuracy}%
               </Badge>
             </Group>
-            <Progress 
-              value={sessionStats.accuracy} 
-              color={getAccuracyColor(sessionStats.accuracy)} 
-              size="lg" 
-              radius="md" 
+            <Progress
+              value={sessionStats.accuracy}
+              color={getAccuracyColor(sessionStats.accuracy)}
+              size="lg"
+              radius="md"
             />
           </div>
 
@@ -304,7 +304,7 @@ function SessionCompletionContent() {
         <Alert color="green" variant="light" mb="xl">
           <Text fw={500}>🌟 Excellent Performance!</Text>
           <Text size="sm">
-            You&apos;re mastering Hebrew vocabulary at an impressive pace. Keep up the fantastic work!
+            You&apos;re mastering vocabulary at an impressive pace. Keep up the fantastic work!
           </Text>
         </Alert>
       ) : sessionStats.accuracy >= 60 ? (
@@ -329,13 +329,13 @@ function SessionCompletionContent() {
           size="lg"
           leftSection={<IconRefresh size={20} />}
           onClick={() => router.push(`/study/${language}/${sectionId}/flashcard`)}
-          style={{ 
+          style={{
             background: 'linear-gradient(135deg, #11998e, #38ef7d)',
           }}
         >
           Study Again
         </Button>
-        
+
         <Button
           size="lg"
           variant="outline"
@@ -345,7 +345,7 @@ function SessionCompletionContent() {
         >
           Choose New Section
         </Button>
-        
+
         <Button
           size="lg"
           variant="subtle"

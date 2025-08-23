@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hebrew Flashcard Learning System",
-  description: "A comprehensive Hebrew flashcard learning application",
+  title: "Flashcard Vocabulary Builder",
+  description: "A comprehensive flashcard learning application",
 };
 
 export default function RootLayout({
