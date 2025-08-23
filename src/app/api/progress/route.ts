@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/db';
 import { calculateSM2, mapPerformanceToQuality } from '@/lib/sm2-algorithm';
-import { UserProgress } from '@prisma/client';
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -43,110 +42,77 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const { wordId, isCorrect, responseTime, sessionWordAttempts } = await request.json();
-
-  if (!wordId || typeof isCorrect === 'undefined') {
-    return NextResponse.json({ message: 'Word ID and correctness are required' }, { status: 400 });
-  }
-
   try {
-    let userProgress: UserProgress | null = null;
+    const body = await request.json();
+    console.log('Progress API received:', body);
 
-    try {
-      userProgress = await prisma.userProgress.findFirst({
-        where: {
-          userId: parseInt(session.user.id),
-          wordId: parseInt(wordId),
-        },
-      });
-    } catch (error: unknown) {
-      const dbError = error as { code?: string };
-      if (dbError.code === 'P1017' || dbError.code === 'P1001' || dbError.code === 'P1008') {
-        // Retry once for connection errors
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        userProgress = await prisma.userProgress.findFirst({
-          where: {
-            userId: parseInt(session.user.id),
-            wordId: parseInt(wordId),
-          },
-        });
-      } else {
-        throw error;
-      }
-    }
+    const { wordId, isCorrect, responseTime, sessionWordAttempts } = body;
 
-    if (!userProgress) {
-      try {
-        userProgress = await prisma.userProgress.create({
-          data: {
-            userId: parseInt(session.user.id),
-            wordId: parseInt(wordId),
-            correctCount: 0,
-            incorrectCount: 0,
-            consecutiveCorrect: 0,
-            timesSeen: 0,
-            isManuallyLearned: false,
-            // SM-2 defaults
-            easinessFactor: 2.5,
-            interval: 1,
-            repetition: 0,
-            nextReviewDate: new Date(),
-            quality: null,
-          },
-        });
-      } catch (error: unknown) {
-        const dbError = error as { code?: string };
-        if (dbError.code === 'P1017' || dbError.code === 'P1001' || dbError.code === 'P1008') {
-          // Retry once for connection errors
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          userProgress = await prisma.userProgress.create({
-            data: {
-              userId: parseInt(session.user.id),
-              wordId: parseInt(wordId),
-              correctCount: 0,
-              incorrectCount: 0,
-              consecutiveCorrect: 0,
-              timesSeen: 0,
-              isManuallyLearned: false,
-              // SM-2 defaults
-              easinessFactor: 2.5,
-              interval: 1,
-              repetition: 0,
-              nextReviewDate: new Date(),
-              quality: null,
-            },
-          });
-        } else {
-          throw error;
-        }
-      }
+    if (!wordId || typeof isCorrect === 'undefined') {
+      console.log('Missing required fields:', { wordId, isCorrect });
+      return NextResponse.json({ message: 'Word ID and correctness are required' }, { status: 400 });
     }
+    const userId = parseInt(session.user.id);
+    const wordIdNum = parseInt(wordId);
+
+    console.log('Processing progress for:', { userId, wordIdNum });
+
+    // Get or create user progress using findFirst to get current state
+    let userProgress = await prisma.userProgress.findFirst({
+      where: {
+        userId: userId,
+        wordId: wordIdNum,
+      },
+    });
+
+    console.log('Found existing progress:', userProgress ? 'YES' : 'NO');
 
     // Calculate SM-2 quality rating based on performance
     const quality = mapPerformanceToQuality(isCorrect, responseTime, sessionWordAttempts);
+    console.log('SM-2 inputs:', { quality, isCorrect, responseTime, sessionWordAttempts });
 
+    // Get default values for new progress records
+    const defaultProgress = {
+      correctCount: 0,
+      incorrectCount: 0,
+      consecutiveCorrect: 0,
+      timesSeen: 0,
+      isManuallyLearned: false,
+      easinessFactor: 2.5,
+      interval: 1,
+      repetition: 0,
+      nextReviewDate: new Date(),
+      quality: null,
+    };
 
+    // Use existing values or defaults
+    const currentValues = userProgress || defaultProgress;
 
     // Apply SM-2 algorithm
     const sm2Result = calculateSM2({
       quality,
-      easinessFactor: userProgress.easinessFactor,
-      interval: userProgress.interval,
-      repetition: userProgress.repetition,
+      easinessFactor: currentValues.easinessFactor,
+      interval: currentValues.interval,
+      repetition: currentValues.repetition,
     });
+
+    console.log('SM-2 result:', sm2Result);
 
     // Ensure the nextReviewDate is a valid Date object
     const nextReviewDate = new Date(sm2Result.nextReviewDate);
 
+    if (isNaN(nextReviewDate.getTime())) {
+      console.error('Invalid date created:', sm2Result.nextReviewDate);
+      throw new Error('Invalid nextReviewDate generated by SM-2 algorithm');
+    }
 
-
-    const updatedData = {
-      timesSeen: userProgress.timesSeen + 1,
+    // Prepare the data for upsert
+    const progressData = {
+      timesSeen: currentValues.timesSeen + 1,
       lastSeen: new Date(),
-      correctCount: isCorrect ? userProgress.correctCount + 1 : userProgress.correctCount,
-      incorrectCount: isCorrect ? userProgress.incorrectCount : userProgress.incorrectCount + 1,
-      consecutiveCorrect: isCorrect ? userProgress.consecutiveCorrect + 1 : 0,
-
+      correctCount: isCorrect ? currentValues.correctCount + 1 : currentValues.correctCount,
+      incorrectCount: isCorrect ? currentValues.incorrectCount : currentValues.incorrectCount + 1,
+      consecutiveCorrect: isCorrect ? currentValues.consecutiveCorrect + 1 : 0,
       // SM-2 fields
       easinessFactor: sm2Result.easinessFactor,
       interval: sm2Result.interval,
@@ -156,36 +122,27 @@ export async function POST(request: Request) {
       isManuallyLearned: sm2Result.isLearned,
     };
 
-    let updatedProgress: UserProgress;
-    try {
-      updatedProgress = await prisma.userProgress.update({
-        where: {
-          id: userProgress.id,
+    console.log('Upserting progress with data:', progressData);
+
+    // Use upsert to handle both create and update cases atomically
+    const updatedProgress = await prisma.userProgress.upsert({
+      where: {
+        userId_wordId: {
+          userId: userId,
+          wordId: wordIdNum,
         },
-        data: updatedData,
-      });
+      },
+      update: progressData,
+      create: {
+        userId: userId,
+        wordId: wordIdNum,
+        ...progressData,
+      },
+    });
 
-    } catch (error: unknown) {
-      const dbError = error as { code?: string };
-      console.error('Database update error:', dbError);
-      if (dbError.code === 'P1017' || dbError.code === 'P1001' || dbError.code === 'P1008') {
-        // Retry once for connection errors
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        updatedProgress = await prisma.userProgress.update({
-          where: {
-            id: userProgress.id,
-          },
-          data: updatedData,
-        });
+    console.log('Successfully upserted progress:', updatedProgress.id);
 
-      } else {
-        throw error;
-      }
-    }
-
-
-
-    const wasLearned = sm2Result.isLearned && !userProgress.isManuallyLearned;
+    const wasLearned = sm2Result.isLearned && !currentValues.isManuallyLearned;
 
 
 
@@ -201,6 +158,14 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Error updating user progress:', error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error('Error details:', {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+      name: (error as Error).name
+    });
+    return NextResponse.json({
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+    }, { status: 500 });
   }
 }

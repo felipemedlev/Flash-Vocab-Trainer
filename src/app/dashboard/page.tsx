@@ -20,11 +20,11 @@ import {
   SimpleGrid,
   Anchor
 } from '@mantine/core';
-import { 
-  IconBooks, 
-  IconTrophy, 
-  IconFlame, 
-  IconGlobe, 
+import {
+  IconBooks,
+  IconTrophy,
+  IconFlame,
+  IconGlobe,
   IconPlayerPlay,
   IconArrowRight,
   IconStar
@@ -114,16 +114,16 @@ export default function DashboardPage() {
 
           if (sectionsResponse.ok) {
             allSections = await sectionsResponse.json();
-            
+
             // Process sections by language
             Object.keys(SUPPORTED_LANGUAGES).forEach(langCode => {
               const langConfig = SUPPORTED_LANGUAGES[langCode];
               const langSections = allSections.filter(s => s.language.code === langCode);
-              
+
               const totalWords = langSections.reduce((sum, s) => sum + s.totalWords, 0);
               const learnedWords = langSections.reduce((sum, s) => sum + s.learnedWords, 0);
               const sectionsCompleted = langSections.filter(s => s.learnedWords === s.totalWords && s.totalWords > 0).length;
-              
+
               languageStats[langCode] = {
                 languageCode: langCode,
                 languageName: langConfig.name,
@@ -138,7 +138,7 @@ export default function DashboardPage() {
             });
 
             setLanguageProgress(Object.values(languageStats).filter(lang => lang.totalWords > 0));
-            
+
             // Set recent sections (top 6)
             const sectionsWithProgress = allSections.map((section: SectionProgress) => ({
               ...section,
@@ -151,7 +151,7 @@ export default function DashboardPage() {
           const totalWordsLearned = Object.values(languageStats).reduce((sum, lang) => sum + lang.learnedWords, 0);
           const totalSectionsCompleted = Object.values(languageStats).reduce((sum, lang) => sum + lang.sectionsCompleted, 0);
           const languagesStudied = Object.values(languageStats).filter(lang => lang.learnedWords > 0).length;
-          const mostStudiedLanguage = Object.values(languageStats).reduce((prev, current) => 
+          const mostStudiedLanguage = Object.values(languageStats).reduce((prev, current) =>
             (prev.learnedWords > current.learnedWords) ? prev : current
           )?.languageName || 'None';
 
@@ -409,11 +409,6 @@ export default function DashboardPage() {
           </Paper>
         )}
 
-        {/* Progress Chart */}
-        <Paper withBorder p="md" radius="md" mb="xl">
-          <Title order={3} mb="md">Your Progress 📈</Title>
-          <ProgressChart />
-        </Paper>
 
         {/* Motivational CTA */}
         {dailyProgress.progress < 100 && (

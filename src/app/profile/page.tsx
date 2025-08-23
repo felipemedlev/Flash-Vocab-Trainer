@@ -18,16 +18,31 @@ import {
   Stack,
   Card,
   SimpleGrid,
+  Progress,
 } from '@mantine/core';
+import { IconGlobe, IconBooks, IconTrophy, IconFlame, IconChevronRight } from '@tabler/icons-react';
 import Link from 'next/link';
+import { SUPPORTED_LANGUAGES } from '@/config/languages';
 
 interface UserStats {
   totalWordsLearned: number;
   sectionsCompleted: number;
   currentStreak: number;
   longestStreak: number;
-  studyDays: number;
-  averageSessionLength: number;
+  languagesStudied: number;
+  totalSections: number;
+}
+
+interface LanguageProgress {
+  languageCode: string;
+  languageName: string;
+  nativeName: string;
+  isRTL: boolean;
+  totalWords: number;
+  learnedWords: number;
+  sectionsCompleted: number;
+  totalSections: number;
+  progress: number;
 }
 
 export default function ProfilePage() {
@@ -38,6 +53,7 @@ export default function ProfilePage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [languageProgress, setLanguageProgress] = useState<LanguageProgress[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,16 +63,58 @@ export default function ProfilePage() {
         setEmail(session.user.email || '');
 
         try {
-          const response = await fetch('/api/profile');
-          if (response.ok) {
-            const data = await response.json();
+          // Fetch user profile data
+          const profileResponse = await fetch('/api/profile');
+          let profileData = null;
+          if (profileResponse.ok) {
+            profileData = await profileResponse.json();
+          }
+
+          // Fetch sections data for all languages
+          const sectionsResponse = await fetch('/api/sections');
+          if (sectionsResponse.ok) {
+            const allSections = await sectionsResponse.json();
+            const languageStats: Record<string, LanguageProgress> = {};
+            
+            // Process sections by language
+            Object.keys(SUPPORTED_LANGUAGES).forEach(langCode => {
+              const langConfig = SUPPORTED_LANGUAGES[langCode];
+              const langSections = allSections.filter((s: any) => s.language.code === langCode);
+              
+              const totalWords = langSections.reduce((sum: number, s: any) => sum + s.totalWords, 0);
+              const learnedWords = langSections.reduce((sum: number, s: any) => sum + s.learnedWords, 0);
+              const sectionsCompleted = langSections.filter((s: any) => s.learnedWords === s.totalWords && s.totalWords > 0).length;
+              
+              if (totalWords > 0) {
+                languageStats[langCode] = {
+                  languageCode: langCode,
+                  languageName: langConfig.name,
+                  nativeName: langConfig.nativeName,
+                  isRTL: langConfig.isRTL,
+                  totalWords,
+                  learnedWords,
+                  sectionsCompleted,
+                  totalSections: langSections.length,
+                  progress: totalWords > 0 ? (learnedWords / totalWords) * 100 : 0
+                };
+              }
+            });
+
+            setLanguageProgress(Object.values(languageStats));
+
+            // Calculate overall stats
+            const totalWordsLearned = Object.values(languageStats).reduce((sum, lang) => sum + lang.learnedWords, 0);
+            const totalSectionsCompleted = Object.values(languageStats).reduce((sum, lang) => sum + lang.sectionsCompleted, 0);
+            const languagesStudied = Object.values(languageStats).filter(lang => lang.learnedWords > 0).length;
+            const totalSections = Object.values(languageStats).reduce((sum, lang) => sum + lang.totalSections, 0);
+
             setUserStats({
-              totalWordsLearned: data.user.currentStreak, // This should be updated in API
-              sectionsCompleted: 0, // This should be updated in API
-              currentStreak: data.user.currentStreak,
-              longestStreak: data.user.longestStreak,
-              studyDays: 0, // This should be updated in API
-              averageSessionLength: 0 // This should be updated in API
+              totalWordsLearned,
+              sectionsCompleted: totalSectionsCompleted,
+              currentStreak: profileData?.user?.currentStreak || 0,
+              longestStreak: profileData?.user?.longestStreak || 0,
+              languagesStudied,
+              totalSections
             });
           }
         } catch (err) {
@@ -122,10 +180,10 @@ export default function ProfilePage() {
 
   const getStreakMessage = (current: number, longest: number) => {
     if (current === 0) return "Start your learning streak today! 🚀";
-    if (current === longest && current >= 7) return "🔥 You&apos;re on your longest streak ever!";
-    if (current >= 30) return "🏆 Amazing dedication! You&apos;re a Hebrew master!";
+    if (current === longest && current >= 7) return "🔥 You're on your longest streak ever!";
+    if (current >= 30) return "🏆 Amazing dedication! You're a language learning champion!";
     if (current >= 14) return "💪 Two weeks strong! Keep it up!";
-    if (current >= 7) return "🌟 One week streak! You&apos;re building great habits!";
+    if (current >= 7) return "🌟 One week streak! You're building great habits!";
     return "📈 Great start! Keep building momentum!";
   };
 
@@ -150,9 +208,48 @@ export default function ProfilePage() {
       </Group>
 
       <Grid>
-        {/* Left Column - Stats & Achievements */}
+        {/* Left Column - Learning Overview */}
         <Grid.Col span={{ base: 12, md: 8 }}>
-          {/* Streak Section */}
+          {/* Overall Stats */}
+          <SimpleGrid cols={{ base: 2, sm: 4 }} mb="lg">
+            <Card shadow="sm" padding="lg" radius="md" withBorder style={{ background: 'linear-gradient(135deg, #667eea20, #764ba220)' }}>
+              <Group mb="xs">
+                <IconBooks size={24} />
+                <Text size="xs" c="dimmed">WORDS</Text>
+              </Group>
+              <Text size="2rem" fw={700} c="blue">{userStats?.totalWordsLearned || 0}</Text>
+              <Text size="xs" c="dimmed">Total learned</Text>
+            </Card>
+            
+            <Card shadow="sm" padding="lg" radius="md" withBorder style={{ background: 'linear-gradient(135deg, #11998e20, #38ef7d20)' }}>
+              <Group mb="xs">
+                <IconTrophy size={24} />
+                <Text size="xs" c="dimmed">SECTIONS</Text>
+              </Group>
+              <Text size="2rem" fw={700} c="green">{userStats?.sectionsCompleted || 0}</Text>
+              <Text size="xs" c="dimmed">Completed</Text>
+            </Card>
+            
+            <Card shadow="sm" padding="lg" radius="md" withBorder style={{ background: 'linear-gradient(135deg, #ff930020, #ff658020)' }}>
+              <Group mb="xs">
+                <IconFlame size={24} />
+                <Text size="xs" c="dimmed">STREAK</Text>
+              </Group>
+              <Text size="2rem" fw={700} c={getStreakColor(userStats?.currentStreak || 0)}>{userStats?.currentStreak || 0}</Text>
+              <Text size="xs" c="dimmed">Days in a row</Text>
+            </Card>
+            
+            <Card shadow="sm" padding="lg" radius="md" withBorder style={{ background: 'linear-gradient(135deg, #8E44AD20, #3498DB20)' }}>
+              <Group mb="xs">
+                <IconGlobe size={24} />
+                <Text size="xs" c="dimmed">LANGUAGES</Text>
+              </Group>
+              <Text size="2rem" fw={700} c="purple">{userStats?.languagesStudied || 0}</Text>
+              <Text size="xs" c="dimmed">Studying</Text>
+            </Card>
+          </SimpleGrid>
+
+          {/* Learning Streak */}
           <Paper withBorder p="lg" radius="md" mb="lg" style={{ background: 'linear-gradient(135deg, #667eea10, #764ba210)' }}>
             <Group justify="space-between" mb="md">
               <Title order={3}>Learning Streak 🔥</Title>
@@ -192,47 +289,53 @@ export default function ProfilePage() {
             </SimpleGrid>
           </Paper>
 
-          {/* Achievement Badges */}
-          <Paper withBorder p="lg" radius="md" mb="lg">
-            <Title order={3} mb="md">Achievements 🎯</Title>
-            <SimpleGrid cols={{ base: 2, sm: 4 }}>
-              <div style={{ textAlign: 'center' }}>
-                <Text size="3rem" mb="xs">
-                  {(userStats?.currentStreak || 0) >= 7 ? '🔥' : '⭐'}
-                </Text>
-                <Text size="sm" fw={500}>Week Warrior</Text>
-                <Text size="xs" c="dimmed">
-                  {(userStats?.currentStreak || 0) >= 7 ? 'Unlocked!' : '7 day streak'}
-                </Text>
-              </div>
-              
-              <div style={{ textAlign: 'center' }}>
-                <Text size="3rem" mb="xs">
-                  {(userStats?.longestStreak || 0) >= 30 ? '👑' : '🏅'}
-                </Text>
-                <Text size="sm" fw={500}>Month Master</Text>
-                <Text size="xs" c="dimmed">
-                  {(userStats?.longestStreak || 0) >= 30 ? 'Unlocked!' : '30 day streak'}
-                </Text>
-              </div>
-              
-              <div style={{ textAlign: 'center' }}>
-                <Text size="3rem" mb="xs">📚</Text>
-                <Text size="sm" fw={500}>First Steps</Text>
-                <Text size="xs" c="dimmed">Started learning</Text>
-              </div>
-              
-              <div style={{ textAlign: 'center' }}>
-                <Text size="3rem" mb="xs">
-                  {(userStats?.currentStreak || 0) >= 100 ? '🚀' : '🌟'}
-                </Text>
-                <Text size="sm" fw={500}>Century Club</Text>
-                <Text size="xs" c="dimmed">
-                  {(userStats?.currentStreak || 0) >= 100 ? 'Unlocked!' : '100 day streak'}
-                </Text>
-              </div>
-            </SimpleGrid>
-          </Paper>
+          {/* Language Progress */}
+          {languageProgress.length > 0 && (
+            <Paper withBorder p="lg" radius="md" mb="lg">
+              <Title order={3} mb="md">Your Languages 🌍</Title>
+              <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                {languageProgress.map((lang) => (
+                  <Card
+                    key={lang.languageCode}
+                    shadow="xs"
+                    padding="md"
+                    radius="md"
+                    withBorder
+                    component={Link}
+                    href={`/learn/${lang.languageCode}/sections`}
+                    style={{ textDecoration: 'none', cursor: 'pointer' }}
+                  >
+                    <Group justify="space-between" mb="xs">
+                      <div>
+                        <Group gap="xs">
+                          <Text fw={500}>{lang.languageName}</Text>
+                          <Text size="lg">{SUPPORTED_LANGUAGES[lang.languageCode].flag}</Text>
+                        </Group>
+                        <Text size="sm" c="dimmed" style={{ direction: lang.isRTL ? 'rtl' : 'ltr' }}>
+                          {lang.nativeName}
+                        </Text>
+                      </div>
+                      <Group gap="xs">
+                        <Badge color="blue" variant="light">
+                          {Math.round(lang.progress)}%
+                        </Badge>
+                        <IconChevronRight size={16} />
+                      </Group>
+                    </Group>
+                    <Progress value={lang.progress} color="blue" size="sm" mb="xs" />
+                    <Group justify="space-between">
+                      <Text size="xs" c="dimmed">
+                        {lang.learnedWords} / {lang.totalWords} words
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        {lang.sectionsCompleted} / {lang.totalSections} sections
+                      </Text>
+                    </Group>
+                  </Card>
+                ))}
+              </SimpleGrid>
+            </Paper>
+          )}
 
           {/* Quick Actions */}
           <Paper withBorder p="lg" radius="md">
@@ -241,10 +344,10 @@ export default function ProfilePage() {
               <Button 
                 size="lg" 
                 component={Link} 
-                href="/sections"
+                href="/"
                 style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)' }}
               >
-                📖 Continue Learning
+                🌍 Choose Language
               </Button>
               <Button 
                 size="lg" 
@@ -306,30 +409,34 @@ export default function ProfilePage() {
             </form>
           </Paper>
 
-          {/* Study Stats */}
+          {/* Platform Summary */}
           <Paper withBorder p="lg" radius="md" mt="lg">
-            <Title order={4} mb="md">Study Statistics 📈</Title>
+            <Title order={4} mb="md">Learning Summary 📈</Title>
             <Stack gap="sm">
               <Group justify="space-between">
-                <Text size="sm">Total Study Days</Text>
-                <Badge color="blue">{userStats?.studyDays || 0}</Badge>
+                <Text size="sm">Total Words</Text>
+                <Badge color="blue">{userStats?.totalWordsLearned || 0}</Badge>
               </Group>
               <Group justify="space-between">
-                <Text size="sm">Words Learned</Text>
-                <Badge color="green">{userStats?.totalWordsLearned || 0}</Badge>
+                <Text size="sm">Sections Done</Text>
+                <Badge color="green">{userStats?.sectionsCompleted || 0}</Badge>
               </Group>
               <Group justify="space-between">
-                <Text size="sm">Sections Completed</Text>
-                <Badge color="purple">{userStats?.sectionsCompleted || 0}</Badge>
+                <Text size="sm">Active Languages</Text>
+                <Badge color="purple">{userStats?.languagesStudied || 0}</Badge>
+              </Group>
+              <Group justify="space-between">
+                <Text size="sm">Available Sections</Text>
+                <Badge color="orange">{userStats?.totalSections || 0}</Badge>
               </Group>
             </Stack>
           </Paper>
 
-          {/* Motivational Message */}
+          {/* Study Tip */}
           <Alert color="blue" variant="light" mt="lg">
-            <Text fw={500} mb="xs">💡 Pro Tip</Text>
+            <Text fw={500} mb="xs">💡 Study Tip</Text>
             <Text size="sm">
-              Study for just 10 minutes daily to maintain your streak and see consistent progress!
+              Try studying multiple languages to boost your learning and maintain daily streaks across all your chosen languages!
             </Text>
           </Alert>
         </Grid.Col>

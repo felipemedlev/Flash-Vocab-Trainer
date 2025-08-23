@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import {
   TextInput,
   PasswordInput,
@@ -80,10 +81,25 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess("Account created successfully! Redirecting to login...");
-        setTimeout(() => {
-          router.push("/auth/login");
-        }, 2000);
+        setSuccess("Account created successfully! Signing you in...");
+        
+        // Automatically sign in the user
+        const signInResult = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (signInResult?.ok) {
+          // Redirect to dashboard after successful sign in
+          router.push("/dashboard");
+        } else {
+          // If auto sign in fails, redirect to login page
+          setSuccess("Account created successfully! Please sign in...");
+          setTimeout(() => {
+            router.push("/auth/login");
+          }, 2000);
+        }
       } else {
         setError(data.message || "Registration failed. Please try again.");
       }

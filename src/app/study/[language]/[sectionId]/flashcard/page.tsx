@@ -279,6 +279,7 @@ export default function FlashcardContent() {
 
         const params = new URLSearchParams({
           sectionId: sectionId || '',
+          language: language || 'he',
           wordsStudied: finalTotalAnswers.toString(),
           correctAnswers: finalCorrectAnswers.toString(),
           sessionLength: sessionLength.toString(),

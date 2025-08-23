@@ -150,7 +150,7 @@ export default function LanguageSectionsPage() {
               </Text>
             </div>
           </Group>
-          
+
           <Group gap="sm">
             <Button
               component={Link}
@@ -186,8 +186,8 @@ export default function LanguageSectionsPage() {
             </div>
             <div style={{ textAlign: 'center' }}>
               <Text size="xl" fw={700} c="grape">
-                {sections.length > 0 
-                  ? Math.round((sections.reduce((sum, section) => sum + section.learnedWords, 0) / 
+                {sections.length > 0
+                  ? Math.round((sections.reduce((sum, section) => sum + section.learnedWords, 0) /
                      sections.reduce((sum, section) => sum + section.totalWords, 0)) * 100) || 0
                   : 0}%
               </Text>
@@ -204,11 +204,11 @@ export default function LanguageSectionsPage() {
               <Title order={2}>Official Content</Title>
               <Badge color="blue" variant="light">Curated</Badge>
             </Group>
-            
+
             <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
               {defaultSections.map((section) => {
-                const progressPercentage = section.totalWords > 0 
-                  ? (section.learnedWords / section.totalWords) * 100 
+                const progressPercentage = section.totalWords > 0
+                  ? (section.learnedWords / section.totalWords) * 100
                   : 0;
                 const isCompleted = progressPercentage === 100;
 
@@ -220,7 +220,7 @@ export default function LanguageSectionsPage() {
                     radius="md"
                     withBorder
                     style={{
-                      background: isCompleted 
+                      background: isCompleted
                         ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.1))'
                         : 'white',
                       borderColor: isCompleted ? 'var(--mantine-color-green-3)' : undefined
@@ -274,7 +274,7 @@ export default function LanguageSectionsPage() {
                         >
                           {isCompleted ? 'Review' : 'Study'}
                         </Button>
-                        
+
                         <Tooltip label="View Words">
                           <ActionIcon
                             component={Link}
@@ -295,20 +295,78 @@ export default function LanguageSectionsPage() {
         )}
 
         {/* Custom Sections */}
-        {customSections.length > 0 && (
-          <>
-            <Divider />
-            <Stack gap="md">
-              <Group gap="sm">
-                <IconPlus size={20} color="var(--mantine-color-orange-6)" />
-                <Title order={2}>Your Custom Content</Title>
-                <Badge color="orange" variant="light">Personal</Badge>
-              </Group>
-              
-              <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+        <>
+          <Divider />
+          <Stack gap="md">
+            <Group gap="sm">
+              <IconPlus size={20} style={{ color: '#11998e' }} />
+              <Title order={2}>Your Custom Content</Title>
+              <Badge variant="light" style={{
+                backgroundColor: 'rgba(17, 153, 142, 0.1)',
+                color: '#11998e',
+                border: '1px solid rgba(17, 153, 142, 0.2)'
+              }}>Personal</Badge>
+            </Group>
+
+            <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
+                {/* Add New Section Card */}
+                <Card
+                  shadow="sm"
+                  padding="lg"
+                  radius="md"
+                  withBorder
+                  component={Link}
+                  href={`/learn/${language}/create-section`}
+                  style={{
+                    border: '2px dashed rgba(17, 153, 142, 0.4)',
+                    backgroundColor: 'rgba(17, 153, 142, 0.02)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    minHeight: '240px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.borderColor = 'rgba(17, 153, 142, 0.6)';
+                    e.currentTarget.style.backgroundColor = 'rgba(17, 153, 142, 0.05)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0px)';
+                    e.currentTarget.style.borderColor = 'rgba(17, 153, 142, 0.4)';
+                    e.currentTarget.style.backgroundColor = 'rgba(17, 153, 142, 0.02)';
+                  }}
+                >
+                  <Stack align="center" gap="md">
+                    <div
+                      style={{
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, rgba(17, 153, 142, 0.1), rgba(56, 239, 125, 0.05))',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px solid rgba(17, 153, 142, 0.4)'
+                      }}
+                    >
+                      <IconPlus size={24} style={{ color: '#11998e' }} />
+                    </div>
+                    <Stack align="center" gap={4}>
+                      <Text size="lg" fw={600} style={{ color: '#11998e' }}>
+                        Create New Section
+                      </Text>
+                      <Text size="sm" c="dimmed" ta="center">
+                        Add your own vocabulary manually
+                      </Text>
+                    </Stack>
+                  </Stack>
+                </Card>
+
                 {customSections.map((section) => {
-                  const progressPercentage = section.totalWords > 0 
-                    ? (section.learnedWords / section.totalWords) * 100 
+                  const progressPercentage = section.totalWords > 0
+                    ? (section.learnedWords / section.totalWords) * 100
                     : 0;
                   const isCompleted = progressPercentage === 100;
 
@@ -320,7 +378,7 @@ export default function LanguageSectionsPage() {
                       radius="md"
                       withBorder
                       style={{
-                        background: isCompleted 
+                        background: isCompleted
                           ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.1))'
                           : 'linear-gradient(135deg, rgba(255, 152, 0, 0.05), rgba(255, 152, 0, 0.1))',
                         borderColor: isCompleted ? 'var(--mantine-color-green-3)' : 'var(--mantine-color-orange-3)'
@@ -374,7 +432,7 @@ export default function LanguageSectionsPage() {
                           >
                             {isCompleted ? 'Review' : 'Study'}
                           </Button>
-                          
+
                           <Tooltip label="View Words">
                             <ActionIcon
                               component={Link}
@@ -403,10 +461,9 @@ export default function LanguageSectionsPage() {
                     </Card>
                   );
                 })}
-              </SimpleGrid>
-            </Stack>
-          </>
-        )}
+            </SimpleGrid>
+          </Stack>
+        </>
 
         {/* Empty State */}
         {sections.length === 0 && !loading && (

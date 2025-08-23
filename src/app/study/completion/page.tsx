@@ -51,6 +51,7 @@ function SessionCompletionContent() {
 
   // Get session data from URL params
   const sectionId = searchParams.get('sectionId');
+  const language = searchParams.get('language') || 'he'; // Default to Hebrew if not specified
   const wordsStudied = parseInt(searchParams.get('wordsStudied') || '0');
   const correctAnswers = parseInt(searchParams.get('correctAnswers') || '0');
   const sessionLength = parseInt(searchParams.get('sessionLength') || '0');
@@ -327,7 +328,7 @@ function SessionCompletionContent() {
         <Button
           size="lg"
           leftSection={<IconRefresh size={20} />}
-          onClick={() => router.push(`/study/${sectionId}`)}
+          onClick={() => router.push(`/study/${language}/${sectionId}/flashcard`)}
           style={{ 
             background: 'linear-gradient(135deg, #11998e, #38ef7d)',
           }}
@@ -340,7 +341,7 @@ function SessionCompletionContent() {
           variant="outline"
           leftSection={<IconBooks size={20} />}
           component={Link}
-          href="/sections"
+          href={`/learn/${language}/sections`}
         >
           Choose New Section
         </Button>

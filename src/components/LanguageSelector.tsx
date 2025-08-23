@@ -171,9 +171,6 @@ export function LanguageSelector({
 
                 {/* Features */}
                 <Group gap="xs" style={{ fontSize: '0.75rem' }}>
-                  {language.features?.hasAudio && (
-                    <Text size="xs" c="dimmed">🔊 Audio</Text>
-                  )}
                   {language.features?.hasRomanization && (
                     <Text size="xs" c="dimmed">🔤 Romanization</Text>
                   )}

@@ -92,3 +92,83 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const { name, description, language: languageCode, words } = body;
+
+    if (!name || !languageCode || !words || !Array.isArray(words)) {
+      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+    }
+
+    if (!isValidLanguageCode(languageCode)) {
+      return NextResponse.json({ message: 'Invalid language code' }, { status: 400 });
+    }
+
+    // Get language ID
+    const language = await prisma.language.findUnique({
+      where: { code: languageCode }
+    });
+
+    if (!language) {
+      return NextResponse.json({ message: 'Language not found' }, { status: 404 });
+    }
+
+    // Validate words format
+    const validWords = words.filter((word: any) => 
+      word.originalText && word.translationText && 
+      typeof word.originalText === 'string' && 
+      typeof word.translationText === 'string'
+    );
+
+    if (validWords.length === 0) {
+      return NextResponse.json({ message: 'No valid words provided' }, { status: 400 });
+    }
+
+    // Create section with words in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the section
+      const section = await tx.section.create({
+        data: {
+          name: name.trim(),
+          description: description?.trim() || null,
+          languageId: language.id,
+          createdByUserId: parseInt(session.user!.id),
+          isDefault: false
+        }
+      });
+
+      // Create the words
+      const wordsData = validWords.map((word: any) => ({
+        originalText: word.originalText.trim(),
+        translationText: word.translationText.trim(),
+        pronunciation: word.pronunciation?.trim() || null,
+        sectionId: section.id,
+        languageId: language.id
+      }));
+
+      await tx.word.createMany({
+        data: wordsData,
+        skipDuplicates: true
+      });
+
+      return section;
+    });
+
+    return NextResponse.json({
+      message: 'Section created successfully',
+      sectionId: result.id,
+      wordsCount: validWords.length
+    });
+
+  } catch (error) {
+    console.error('Error creating section:', error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+  }
+}
