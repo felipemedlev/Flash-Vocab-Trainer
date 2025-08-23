@@ -57,10 +57,9 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthLayout 
-      title="Welcome Back" 
+    <AuthLayout
+      title="Welcome Back"
       subtitle="Sign in to continue your Hebrew learning journey"
-      showBackButton
     >
       <form onSubmit={handleSubmit}>
         <Stack gap="lg">
@@ -86,7 +85,7 @@ export default function LoginPage() {
             placeholder="Enter your password"
             size="md"
             leftSection={<IconLock size={18} className="text-text-secondary" />}
-            visibilityToggleIcon={({ reveal }) => 
+            visibilityToggleIcon={({ reveal }) =>
               reveal ? <IconEyeOff size={18} /> : <IconEye size={18} />
             }
             value={password}
@@ -100,9 +99,9 @@ export default function LoginPage() {
 
           {/* Error Alert */}
           {error && (
-            <Alert 
-              color="red" 
-              variant="light" 
+            <Alert
+              color="red"
+              variant="light"
               icon={<IconAlertCircle size={18} />}
               classNames={{
                 root: 'border-red-200 bg-red-50/50',
@@ -121,18 +120,20 @@ export default function LoginPage() {
             fullWidth
             leftSection={loading ? <Loader size={18} color="white" /> : <IconLogin size={18} />}
             loading={loading}
-            className="bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 border-0 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            className="shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
             style={{
-              background: loading ? undefined : 'linear-gradient(135deg, #5e72e4 0%, #5a67d8 100%)'
+              background: loading ? undefined : 'linear-gradient(135deg, #11998e, #38ef7d)',
+              boxShadow: loading ? undefined : '0 8px 25px rgba(17, 153, 142, 0.3)',
+              border: 'none'
             }}
           >
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>
 
           {/* Divider */}
-          <Divider 
-            label="Don't have an account?" 
-            labelPosition="center" 
+          <Divider
+            label="Don't have an account?"
+            labelPosition="center"
             classNames={{
               label: 'text-text-secondary text-sm'
             }}
@@ -143,11 +144,17 @@ export default function LoginPage() {
             <Button
               component={Link}
               href="/auth/register"
-              variant="light"
+              variant="outline"
               size="md"
               fullWidth
               leftSection={<IconUserPlus size={18} />}
-              className="text-accent hover:text-accent/80 bg-accent/5 hover:bg-accent/10 border border-accent/20 hover:border-accent/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              className="transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                borderColor: '#11998e',
+                color: '#11998e',
+                background: 'transparent',
+                boxShadow: 'none'
+              }}
             >
               Create New Account
             </Button>

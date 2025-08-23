@@ -82,7 +82,7 @@ export default function RegisterPage() {
 
       if (response.ok) {
         setSuccess("Account created successfully! Signing you in...");
-        
+
         // Automatically sign in the user
         const signInResult = await signIn("credentials", {
           email,
@@ -112,10 +112,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthLayout 
-      title="Get Started" 
+    <AuthLayout
+      title="Get Started"
       subtitle="Create your account and begin mastering Hebrew today"
-      showBackButton
     >
       <form onSubmit={handleSubmit}>
         <Stack gap="lg">
@@ -157,7 +156,7 @@ export default function RegisterPage() {
               placeholder="Create a strong password"
               size="md"
               leftSection={<IconLock size={18} className="text-text-secondary" />}
-              visibilityToggleIcon={({ reveal }) => 
+              visibilityToggleIcon={({ reveal }) =>
                 reveal ? <IconEyeOff size={18} /> : <IconEye size={18} />
               }
               value={password}
@@ -168,7 +167,7 @@ export default function RegisterPage() {
                 label: 'font-medium text-text-primary mb-2'
               }}
             />
-            
+
             {password && (
               <Stack gap="xs">
                 <Group justify="space-between">
@@ -189,9 +188,9 @@ export default function RegisterPage() {
 
           {/* Success Alert */}
           {success && (
-            <Alert 
-              color="green" 
-              variant="light" 
+            <Alert
+              color="green"
+              variant="light"
               icon={<IconCheck size={18} />}
               classNames={{
                 root: 'border-green-200 bg-green-50/50',
@@ -205,9 +204,9 @@ export default function RegisterPage() {
 
           {/* Error Alert */}
           {error && (
-            <Alert 
-              color="red" 
-              variant="light" 
+            <Alert
+              color="red"
+              variant="light"
               icon={<IconAlertCircle size={18} />}
               classNames={{
                 root: 'border-red-200 bg-red-50/50',
@@ -227,18 +226,20 @@ export default function RegisterPage() {
             leftSection={loading ? <Loader size={18} color="white" /> : <IconUserPlus size={18} />}
             loading={loading}
             disabled={success !== ""}
-            className="bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent/80 border-0 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            className="shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
             style={{
-              background: loading || success ? undefined : 'linear-gradient(135deg, #5e72e4 0%, #5a67d8 100%)'
+              background: loading || success ? undefined : 'linear-gradient(135deg, #11998e, #38ef7d)',
+              boxShadow: loading || success ? undefined : '0 8px 25px rgba(17, 153, 142, 0.3)',
+              border: 'none'
             }}
           >
             {loading ? 'Creating Account...' : success ? 'Account Created!' : 'Create Account'}
           </Button>
 
           {/* Divider */}
-          <Divider 
-            label="Already have an account?" 
-            labelPosition="center" 
+          <Divider
+            label="Already have an account?"
+            labelPosition="center"
             classNames={{
               label: 'text-text-secondary text-sm'
             }}
@@ -249,11 +250,17 @@ export default function RegisterPage() {
             <Button
               component={Link}
               href="/auth/login"
-              variant="light"
+              variant="outline"
               size="md"
               fullWidth
               leftSection={<IconLogin size={18} />}
-              className="text-accent hover:text-accent/80 bg-accent/5 hover:bg-accent/10 border border-accent/20 hover:border-accent/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              className="transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                borderColor: '#11998e',
+                color: '#11998e',
+                background: 'transparent',
+                boxShadow: 'none'
+              }}
             >
               Sign In Instead
             </Button>
