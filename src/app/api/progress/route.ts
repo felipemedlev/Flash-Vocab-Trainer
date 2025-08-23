@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     console.log('Processing progress for:', { userId, wordIdNum });
 
     // Get or create user progress using findFirst to get current state
-    let userProgress = await prisma.userProgress.findFirst({
+    const userProgress = await prisma.userProgress.findFirst({
       where: {
         userId: userId,
         wordId: wordIdNum,

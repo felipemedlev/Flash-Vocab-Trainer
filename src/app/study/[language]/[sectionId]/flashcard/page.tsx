@@ -289,7 +289,7 @@ export default function FlashcardContent() {
         router.push(`/study/completion?${params.toString()}`);
       }
     }, 1000); // Reduced to 1 second delay for faster card transitions
-  }, [showFeedback, flashcards, currentCardIndex, cardStartTime, sessionWordAttempts, sessionStats, sectionId, router, progressQueue, sessionWordsLearned]);
+  }, [showFeedback, flashcards, currentCardIndex, cardStartTime, sessionWordAttempts, sessionStats, sectionId, language, router, progressQueue, sessionWordsLearned]);
 
   // Keyboard shortcuts
   useEffect(() => {

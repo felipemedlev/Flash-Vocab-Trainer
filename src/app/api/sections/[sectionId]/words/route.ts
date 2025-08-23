@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import db from "@/lib/db";
 
 export async function GET(
+  request: Request,
   context: { params: Promise<{ sectionId: string }> }
 ) {
   const { sectionId } = await context.params;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Button,
   TextInput,
@@ -41,11 +41,7 @@ export default function WordManager({ sectionId, language, onWordsUpdated, isDef
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchWords();
-  }, [sectionId]);
-
-  const fetchWords = async () => {
+  const fetchWords = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/sections/${sectionId}/words`);
@@ -61,7 +57,11 @@ export default function WordManager({ sectionId, language, onWordsUpdated, isDef
     } finally {
       setLoading(false);
     }
-  };
+  }, [sectionId]);
+
+  useEffect(() => {
+    fetchWords();
+  }, [fetchWords]);
 
   const startEdit = (word: Word) => {
     setEditingWord(word.id);

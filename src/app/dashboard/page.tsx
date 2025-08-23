@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
+// Removed dynamic import as ProgressChart is no longer used
 import {
   Container,
   Title,
@@ -58,9 +58,7 @@ interface SectionProgress {
   };
 }
 
-const ProgressChart = dynamic(() => import('./components/ProgressChart'), {
-  ssr: false,
-});
+// Removed ProgressChart as it's no longer used
 
 interface DashboardData {
   totalWordsLearned: number;

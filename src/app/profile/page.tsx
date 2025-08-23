@@ -45,6 +45,20 @@ interface LanguageProgress {
   progress: number;
 }
 
+interface SectionData {
+  id: number;
+  name: string;
+  description: string;
+  isDefault: boolean;
+  totalWords: number;
+  learnedWords: number;
+  language: {
+    code: string;
+    name: string;
+    nativeName: string;
+  };
+}
+
 export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -79,11 +93,11 @@ export default function ProfilePage() {
             // Process sections by language
             Object.keys(SUPPORTED_LANGUAGES).forEach(langCode => {
               const langConfig = SUPPORTED_LANGUAGES[langCode];
-              const langSections = allSections.filter((s: any) => s.language.code === langCode);
+              const langSections = allSections.filter((s: SectionData) => s.language.code === langCode);
               
-              const totalWords = langSections.reduce((sum: number, s: any) => sum + s.totalWords, 0);
-              const learnedWords = langSections.reduce((sum: number, s: any) => sum + s.learnedWords, 0);
-              const sectionsCompleted = langSections.filter((s: any) => s.learnedWords === s.totalWords && s.totalWords > 0).length;
+              const totalWords = langSections.reduce((sum: number, s: SectionData) => sum + s.totalWords, 0);
+              const learnedWords = langSections.reduce((sum: number, s: SectionData) => sum + s.learnedWords, 0);
+              const sectionsCompleted = langSections.filter((s: SectionData) => s.learnedWords === s.totalWords && s.totalWords > 0).length;
               
               if (totalWords > 0) {
                 languageStats[langCode] = {

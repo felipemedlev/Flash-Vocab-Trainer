@@ -121,7 +121,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate words format
-    const validWords = words.filter((word: any) => 
+    interface WordInput {
+      originalText: string;
+      translationText: string;
+      pronunciation?: string;
+    }
+    
+    const validWords = words.filter((word: WordInput) => 
       word.originalText && word.translationText && 
       typeof word.originalText === 'string' && 
       typeof word.translationText === 'string'
@@ -145,7 +151,7 @@ export async function POST(request: NextRequest) {
       });
 
       // Create the words
-      const wordsData = validWords.map((word: any) => ({
+      const wordsData = validWords.map((word: WordInput) => ({
         originalText: word.originalText.trim(),
         translationText: word.translationText.trim(),
         pronunciation: word.pronunciation?.trim() || null,
