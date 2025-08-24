@@ -20,9 +20,10 @@ import {
   Pagination,
   Affix,
   ActionIcon,
-  Tooltip
+  Tooltip,
+  Switch
 } from '@mantine/core';
-import { IconArrowLeft, IconBook, IconEye, IconEyeOff, IconEdit } from '@tabler/icons-react';
+import { IconArrowLeft, IconBook, IconEye, IconEyeOff, IconEdit, IconToggleLeft, IconToggleRight } from '@tabler/icons-react';
 import { getLanguageConfig, isValidLanguageCode, getLanguageFontClass } from '@/config/languages';
 import Link from 'next/link';
 
@@ -68,10 +69,33 @@ export default function WordsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showTranslations, setShowTranslations] = useState(false);
+  const [reverseMode, setReverseMode] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalWords, setTotalWords] = useState(0);
   const wordsPerPage = 100;
+
+  // Get preference key for this language/section combination
+  const getPreferenceKey = useCallback(() => `wordDisplay_${language}_${sectionId}`, [language, sectionId]);
+
+  // Load user preference for reverse mode
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedPreference = localStorage.getItem(getPreferenceKey());
+      if (savedPreference) {
+        const preference = JSON.parse(savedPreference);
+        setReverseMode(preference.reverseMode || false);
+      }
+    }
+  }, [getPreferenceKey]);
+
+  // Save user preference when reverse mode changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const preference = { reverseMode };
+      localStorage.setItem(getPreferenceKey(), JSON.stringify(preference));
+    }
+  }, [reverseMode, getPreferenceKey]);
 
   // Validate language
   useEffect(() => {
@@ -248,18 +272,49 @@ export default function WordsPage() {
         )}
 
         {/* Controls */}
-        <Group justify="space-between">
-          <div>
-            <Text size="lg" fw={600}>
-              Words ({totalWords > 0 ? totalWords : words.length})
-            </Text>
-            {totalPages > 1 && (
-              <Text size="sm" c="dimmed">
-                Page {currentPage} of {totalPages}
+        <Stack gap="sm">
+          {/* Words count and pagination info */}
+          <Group justify="space-between">
+            <div>
+              <Text size="lg" fw={600}>
+                Words ({totalWords > 0 ? totalWords : words.length})
               </Text>
-            )}
-          </div>
-        </Group>
+              {totalPages > 1 && (
+                <Text size="sm" c="dimmed">
+                  Page {currentPage} of {totalPages}
+                </Text>
+              )}
+            </div>
+          </Group>
+          
+          {/* Practice Mode Toggle */}
+          <Group justify="center" gap="sm" style={{ 
+            flexWrap: 'wrap',
+            '@media (max-width: 768px)': {
+              justifyContent: 'center'
+            }
+          }}>
+            <Text size="sm" fw={500} c="dimmed">
+              Practice Mode:
+            </Text>
+            <Group gap="xs" align="center" style={{ flexWrap: 'nowrap' }}>
+              <Text size="xs" c={!reverseMode ? "blue" : "dimmed"} style={{ whiteSpace: 'nowrap' }}>
+                {languageConfig?.name} → En
+              </Text>
+              <Switch
+                checked={reverseMode}
+                onChange={(event) => setReverseMode(event.currentTarget.checked)}
+                onLabel={<IconToggleRight size={12} />}
+                offLabel={<IconToggleLeft size={12} />}
+                size="md"
+                color="orange"
+              />
+              <Text size="xs" c={reverseMode ? "orange" : "dimmed"} style={{ whiteSpace: 'nowrap' }}>
+                En → {languageConfig?.name}
+              </Text>
+            </Group>
+          </Group>
+        </Stack>
 
         <Divider />
 
@@ -275,41 +330,68 @@ export default function WordsPage() {
                 withBorder
                 style={{
                   height: '100%',
-                  background: word.progress?.isManuallyLearned 
-                    ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.1))'
-                    : 'white'
+                  background: reverseMode 
+                    ? (word.progress?.isManuallyLearned 
+                        ? 'linear-gradient(135deg, rgba(255, 165, 0, 0.05), rgba(255, 165, 0, 0.15))'
+                        : 'linear-gradient(135deg, rgba(255, 165, 0, 0.02), rgba(255, 165, 0, 0.08))')
+                    : (word.progress?.isManuallyLearned 
+                        ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.1))'
+                        : 'white')
                 }}
               >
                 <Stack gap="xs">
-                  {/* Original Text */}
+                  {/* Primary Text (changes based on mode) */}
                   <div>
                     <Text 
                       size="lg" 
                       fw={700} 
                       ta="center" 
-                      className={fontClass}
-                      style={{ direction: languageConfig?.isRTL ? 'rtl' : 'ltr' }}
+                      className={reverseMode ? '' : fontClass}
+                      style={{ 
+                        direction: reverseMode ? 'ltr' : (languageConfig?.isRTL ? 'rtl' : 'ltr')
+                      }}
                     >
-                      {word.originalText}
+                      {reverseMode ? word.translationText : word.originalText}
                     </Text>
                   </div>
 
-                  {/* Pronunciation */}
-                  {word.pronunciation && (
-                    <div>
-                      <Text size="sm" c="dimmed" ta="center" fs="italic">
-                        [{word.pronunciation}]
-                      </Text>
-                    </div>
-                  )}
-
-                  {/* Translation */}
+                  {/* Secondary content - only shown when eye button is active */}
                   {showTranslations && (
-                    <div>
-                      <Text size="md" c="dimmed" ta="center">
-                        {word.translationText}
-                      </Text>
-                    </div>
+                    <>
+                      {/* Target language word (in reverse mode) */}
+                      {reverseMode && (
+                        <div>
+                          <Text 
+                            size="md" 
+                            c="orange.7" 
+                            ta="center" 
+                            fw={600}
+                            className={fontClass}
+                            style={{ direction: languageConfig?.isRTL ? 'rtl' : 'ltr' }}
+                          >
+                            {word.originalText}
+                          </Text>
+                        </div>
+                      )}
+
+                      {/* Pronunciation - only in reverse mode when revealed */}
+                      {reverseMode && word.pronunciation && (
+                        <div>
+                          <Text size="sm" c="orange.6" ta="center" fs="italic">
+                            [{word.pronunciation}]
+                          </Text>
+                        </div>
+                      )}
+
+                      {/* Translation - only in normal mode when revealed */}
+                      {!reverseMode && (
+                        <div>
+                          <Text size="md" c="dimmed" ta="center">
+                            {word.translationText}
+                          </Text>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {/* Progress Badges */}
@@ -377,7 +459,11 @@ export default function WordsPage() {
         {/* Floating Translation Toggle Button */}
         <Affix position={{ bottom: 20, right: 20 }}>
           <Tooltip
-            label={showTranslations ? 'Hide Translations' : 'Show Translations'}
+            label={
+              showTranslations 
+                ? (reverseMode ? `Hide ${languageConfig?.name} + Pronunciation` : 'Hide Translations')
+                : (reverseMode ? `Show ${languageConfig?.name} + Pronunciation` : 'Show Translations')
+            }
             position="left"
             withArrow
           >
@@ -385,7 +471,7 @@ export default function WordsPage() {
               size="xl"
               radius="xl"
               variant="filled"
-              color={showTranslations ? "blue" : "gray"}
+              color={showTranslations ? (reverseMode ? "orange" : "blue") : "gray"}
               onClick={() => setShowTranslations(!showTranslations)}
               style={{
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
