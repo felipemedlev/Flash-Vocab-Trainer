@@ -339,9 +339,9 @@ export default function WordsPage() {
                         : 'white')
                 }}
               >
-                <Stack gap="xs">
+                <Stack gap="xs" style={{ minHeight: '140px' }}>
                   {/* Primary Text (changes based on mode) */}
-                  <div>
+                  <div style={{ minHeight: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Text 
                       size="lg" 
                       fw={700} 
@@ -355,68 +355,83 @@ export default function WordsPage() {
                     </Text>
                   </div>
 
-                  {/* Secondary content - only shown when eye button is active */}
-                  {showTranslations && (
-                    <>
+                  {/* Secondary content area - always reserves space */}
+                  <div style={{ 
+                    minHeight: '60px', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: '4px',
+                    transition: 'opacity 0.3s ease-in-out'
+                  }}>
+                    <div style={{ 
+                      opacity: showTranslations ? 1 : 0,
+                      transition: 'opacity 0.3s ease-in-out',
+                      minHeight: '48px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px'
+                    }}>
                       {/* Target language word (in reverse mode) */}
                       {reverseMode && (
-                        <div>
-                          <Text 
-                            size="md" 
-                            c="orange.7" 
-                            ta="center" 
-                            fw={600}
-                            className={fontClass}
-                            style={{ direction: languageConfig?.isRTL ? 'rtl' : 'ltr' }}
-                          >
-                            {word.originalText}
-                          </Text>
-                        </div>
+                        <Text 
+                          size="md" 
+                          c="orange.7" 
+                          ta="center" 
+                          fw={600}
+                          className={fontClass}
+                          style={{ direction: languageConfig?.isRTL ? 'rtl' : 'ltr' }}
+                        >
+                          {word.originalText}
+                        </Text>
                       )}
 
                       {/* Pronunciation - only in reverse mode when revealed */}
                       {reverseMode && word.pronunciation && (
-                        <div>
-                          <Text size="sm" c="orange.6" ta="center" fs="italic">
-                            [{word.pronunciation}]
-                          </Text>
-                        </div>
+                        <Text size="sm" c="orange.6" ta="center" fs="italic">
+                          [{word.pronunciation}]
+                        </Text>
                       )}
 
                       {/* Translation - only in normal mode when revealed */}
                       {!reverseMode && (
-                        <div>
-                          <Text size="md" c="dimmed" ta="center">
-                            {word.translationText}
-                          </Text>
-                        </div>
+                        <Text size="md" c="dimmed" ta="center">
+                          {word.translationText}
+                        </Text>
                       )}
-                    </>
-                  )}
+                    </div>
+                  </div>
 
                   {/* Progress Badges */}
-                  <Group justify="center" gap="xs">
-                    {word.progress?.isManuallyLearned && (
-                      <Badge color="green" variant="light" size="sm">
-                        ✅ Learned
-                      </Badge>
-                    )}
-                    {word.progress && word.progress.timesSeen > 0 && (
-                      <Badge color="blue" variant="light" size="sm">
-                        👁️ {word.progress.timesSeen} seen
-                      </Badge>
-                    )}
-                    {word.progress && (word.progress.correctCount > 0 || word.progress.incorrectCount > 0) && (
-                      <Badge color="orange" variant="light" size="sm">
-                        📊 {word.progress.correctCount}/{word.progress.correctCount + word.progress.incorrectCount}
-                      </Badge>
-                    )}
-                  </Group>
+                  <div style={{ minHeight: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <Group justify="center" gap="xs">
+                      {word.progress?.isManuallyLearned && (
+                        <Badge color="green" variant="light" size="sm">
+                          ✅ Learned
+                        </Badge>
+                      )}
+                      {word.progress && word.progress.timesSeen > 0 && (
+                        <Badge color="blue" variant="light" size="sm">
+                          👁️ {word.progress.timesSeen} seen
+                        </Badge>
+                      )}
+                      {word.progress && (word.progress.correctCount > 0 || word.progress.incorrectCount > 0) && (
+                        <Badge color="orange" variant="light" size="sm">
+                          📊 {word.progress.correctCount}/{word.progress.correctCount + word.progress.incorrectCount}
+                        </Badge>
+                      )}
+                    </Group>
+                  </div>
 
                   {/* Word Number */}
-                  <Text size="xs" c="dimmed" ta="center">
-                    Word #{((currentPage - 1) * wordsPerPage) + index + 1}
-                  </Text>
+                  <div style={{ minHeight: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <Text size="xs" c="dimmed" ta="center">
+                      Word #{((currentPage - 1) * wordsPerPage) + index + 1}
+                    </Text>
+                  </div>
                 </Stack>
               </Card>
             </Grid.Col>
