@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Container,
@@ -19,8 +19,28 @@ import {
   Card,
   SimpleGrid,
   Progress,
+  Select,
+  Tabs,
+  ScrollArea,
+  Divider,
+  ActionIcon,
+  Tooltip,
+  Pagination,
 } from '@mantine/core';
-import { IconGlobe, IconBooks, IconTrophy, IconFlame, IconChevronRight } from '@tabler/icons-react';
+import { 
+  IconGlobe, 
+  IconBooks, 
+  IconTrophy, 
+  IconFlame, 
+  IconChevronRight, 
+  IconSearch,
+  IconFilter,
+  IconBrain,
+  IconAlertTriangle,
+  IconCheck,
+  IconRefresh,
+  IconTarget
+} from '@tabler/icons-react';
 import Link from 'next/link';
 import { SUPPORTED_LANGUAGES } from '@/config/languages';
 
@@ -59,6 +79,56 @@ interface SectionData {
   };
 }
 
+interface UserWord {
+  id: number;
+  wordId: number;
+  originalText: string;
+  translationText: string;
+  pronunciation?: string;
+  language: {
+    code: string;
+    name: string;
+    nativeName: string;
+    isRTL: boolean;
+    fontFamily?: string;
+  };
+  section: {
+    id: number;
+    name: string;
+  };
+  stats: {
+    correctCount: number;
+    incorrectCount: number;
+    consecutiveCorrect: number;
+    timesSeen: number;
+    accuracy: number;
+    isLearned: boolean;
+    isDifficult: boolean;
+    isManuallyLearned: boolean;
+    lastSeen?: Date;
+    nextReviewDate: Date;
+    easinessFactor: number;
+    interval: number;
+    repetition: number;
+  };
+}
+
+interface UserWordsResponse {
+  words: UserWord[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+  summary: {
+    totalWords: number;
+    learnedWords: number;
+    difficultWords: number;
+    averageAccuracy: number;
+  };
+}
+
 export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -69,6 +139,16 @@ export default function ProfilePage() {
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [languageProgress, setLanguageProgress] = useState<LanguageProgress[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Words progress states
+  const [userWords, setUserWords] = useState<UserWordsResponse | null>(null);
+  const [wordsLoading, setWordsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [wordsFilter, setWordsFilter] = useState<'all' | 'learned' | 'difficult'>('all');
+  const [languageFilter, setLanguageFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const wordsPerPage = 20;
 
   useEffect(() => {
     async function fetchProfileData() {
@@ -141,6 +221,78 @@ export default function ProfilePage() {
     fetchProfileData();
   }, [session]);
 
+  // Fetch user words data
+  const fetchUserWords = useCallback(async () => {
+    if (!session?.user) return;
+    
+    setWordsLoading(true);
+    setError('');
+    
+    // Add a client-side timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    
+    try {
+      const params = new URLSearchParams({
+        type: wordsFilter,
+        limit: wordsPerPage.toString(),
+        offset: ((currentPage - 1) * wordsPerPage).toString(),
+      });
+      
+      if (languageFilter) params.set('language', languageFilter);
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      
+      console.log('Fetching words with params:', params.toString());
+      
+      // Use the optimized endpoint
+      const response = await fetch(`/api/user-words-simple?${params}`, {
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUserWords(data);
+        setError('');
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Server error: ${response.status}`);
+      }
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      console.error('Failed to fetch user words:', err);
+      
+      const error = err as Error;
+      if (error.name === 'AbortError') {
+        setError('Request timed out. Try filtering by language or using search to narrow results.');
+      } else {
+        setError(error.message || 'Failed to load words. Please try again.');
+      }
+      
+      // Set empty results on error
+      setUserWords({
+        words: [],
+        pagination: { total: 0, limit: wordsPerPage, offset: 0, hasMore: false },
+        summary: { totalWords: 0, learnedWords: 0, difficultWords: 0, averageAccuracy: 0 }
+      });
+    } finally {
+      setWordsLoading(false);
+    }
+  }, [session?.user, wordsFilter, languageFilter, searchQuery, currentPage, wordsPerPage]);
+
+  // Fetch words when tab becomes active or filters change
+  useEffect(() => {
+    if (activeTab === 'words' && session?.user) {
+      fetchUserWords();
+    }
+  }, [activeTab, fetchUserWords, session?.user]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [wordsFilter, languageFilter, searchQuery]);
+
   // Redirect unauthenticated users to login
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -201,6 +353,86 @@ export default function ProfilePage() {
     return "📈 Great start! Keep building momentum!";
   };
 
+  // Helper function to render word cards
+  const renderWordCard = (word: UserWord) => {
+    const { stats, originalText, translationText, pronunciation, language, section } = word;
+    
+    return (
+      <Card key={word.id} shadow="sm" padding="md" radius="md" withBorder>
+        <Group justify="space-between" mb="xs">
+          <div style={{ flex: 1 }}>
+            <Group gap="xs" mb={4}>
+              <Text 
+                fw={500} 
+                size="lg"
+                style={{ 
+                  direction: language.isRTL ? 'rtl' : 'ltr',
+                  fontFamily: language.fontFamily || 'inherit'
+                }}
+              >
+                {originalText}
+              </Text>
+              {pronunciation && (
+                <Text size="sm" c="dimmed" fs="italic">
+                  [{pronunciation}]
+                </Text>
+              )}
+            </Group>
+            <Text size="md" c="blue" mb="xs">{translationText}</Text>
+            <Group gap="xs">
+              <Badge size="xs" variant="light" color="gray">
+                {language.name}
+              </Badge>
+              <Badge size="xs" variant="light">
+                {section.name}
+              </Badge>
+            </Group>
+          </div>
+          <Stack align="center" gap="xs">
+            {stats.isLearned && (
+              <Tooltip label="Mastered">
+                <IconCheck size={20} color="green" />
+              </Tooltip>
+            )}
+            {stats.isDifficult && !stats.isLearned && (
+              <Tooltip label="Needs practice">
+                <IconAlertTriangle size={20} color="orange" />
+              </Tooltip>
+            )}
+            <Badge 
+              color={stats.accuracy >= 80 ? 'green' : stats.accuracy >= 60 ? 'yellow' : 'red'}
+              variant="filled"
+              size="sm"
+            >
+              {stats.accuracy}%
+            </Badge>
+          </Stack>
+        </Group>
+        
+        <Divider my="xs" />
+        
+        <SimpleGrid cols={4} spacing="xs">
+          <div style={{ textAlign: 'center' }}>
+            <Text size="xs" c="dimmed">Seen</Text>
+            <Text size="sm" fw={500}>{stats.timesSeen}</Text>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <Text size="xs" c="dimmed">Correct</Text>
+            <Text size="sm" fw={500} c="green">{stats.correctCount}</Text>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <Text size="xs" c="dimmed">Wrong</Text>
+            <Text size="sm" fw={500} c="red">{stats.incorrectCount}</Text>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <Text size="xs" c="dimmed">Streak</Text>
+            <Text size="sm" fw={500} c="blue">{stats.consecutiveCorrect}</Text>
+          </div>
+        </SimpleGrid>
+      </Card>
+    );
+  };
+
   return (
     <Container size="xl">
       {/* Header */}
@@ -221,9 +453,21 @@ export default function ProfilePage() {
         </div>
       </Group>
 
-      <Grid>
-        {/* Left Column - Learning Overview */}
-        <Grid.Col span={{ base: 12, md: 8 }}>
+      {/* Main Tabs */}
+      <Tabs value={activeTab} onChange={setActiveTab}>
+        <Tabs.List>
+          <Tabs.Tab value="overview" leftSection={<IconTrophy size={16} />}>
+            Overview
+          </Tabs.Tab>
+          <Tabs.Tab value="words" leftSection={<IconBrain size={16} />}>
+            Words Progress
+          </Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="overview" pt="md">
+          <Grid>
+            {/* Left Column - Learning Overview */}
+            <Grid.Col span={{ base: 12, md: 8 }}>
           {/* Overall Stats */}
           <SimpleGrid cols={{ base: 2, sm: 4 }} mb="lg">
             <Card shadow="sm" padding="lg" radius="md" withBorder style={{ background: 'linear-gradient(135deg, #667eea20, #764ba220)' }}>
@@ -453,8 +697,160 @@ export default function ProfilePage() {
               Try studying multiple languages to boost your learning and maintain daily streaks across all your chosen languages!
             </Text>
           </Alert>
-        </Grid.Col>
-      </Grid>
+            </Grid.Col>
+          </Grid>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="words" pt="md">
+          {/* Words Progress Tab */}
+          <Stack gap="lg">
+            {/* Summary Cards */}
+            {userWords?.summary && (
+              <SimpleGrid cols={{ base: 2, sm: 4 }} mb="md">
+                <Card shadow="sm" padding="md" radius="md" withBorder style={{ textAlign: 'center' }}>
+                  <IconBooks size={24} style={{ margin: '0 auto', marginBottom: '8px' }} color="#667eea" />
+                  <Text size="xl" fw={700} c="blue">{userWords.summary.totalWords}</Text>
+                  <Text size="sm" c="dimmed">Total Studied</Text>
+                </Card>
+                <Card shadow="sm" padding="md" radius="md" withBorder style={{ textAlign: 'center' }}>
+                  <IconCheck size={24} style={{ margin: '0 auto', marginBottom: '8px' }} color="#38ef7d" />
+                  <Text size="xl" fw={700} c="green">{userWords.summary.learnedWords}</Text>
+                  <Text size="sm" c="dimmed">Mastered</Text>
+                </Card>
+                <Card shadow="sm" padding="md" radius="md" withBorder style={{ textAlign: 'center' }}>
+                  <IconAlertTriangle size={24} style={{ margin: '0 auto', marginBottom: '8px' }} color="#ff9f43" />
+                  <Text size="xl" fw={700} c="orange">{userWords.summary.difficultWords}</Text>
+                  <Text size="sm" c="dimmed">Need Practice</Text>
+                </Card>
+                <Card shadow="sm" padding="md" radius="md" withBorder style={{ textAlign: 'center' }}>
+                  <IconTarget size={24} style={{ margin: '0 auto', marginBottom: '8px' }} color="#667eea" />
+                  <Text size="xl" fw={700} c="blue">{userWords.summary.averageAccuracy}%</Text>
+                  <Text size="sm" c="dimmed">Avg. Accuracy</Text>
+                </Card>
+              </SimpleGrid>
+            )}
+
+            {/* Filters and Search */}
+            <Paper withBorder p="md" radius="md">
+              <Group justify="space-between" mb="md">
+                <Title order={4}>Your Vocabulary 📚</Title>
+                <ActionIcon 
+                  onClick={fetchUserWords} 
+                  loading={wordsLoading}
+                  variant="subtle"
+                >
+                  <IconRefresh size={16} />
+                </ActionIcon>
+              </Group>
+              
+              <Grid>
+                <Grid.Col span={{ base: 12, sm: 4 }}>
+                  <Select
+                    label="Filter by status"
+                    placeholder="All words"
+                    value={wordsFilter}
+                    onChange={(value: string | null) => setWordsFilter((value as 'all' | 'learned' | 'difficult') || 'all')}
+                    data={[
+                      { value: 'all', label: '📚 All Words' },
+                      { value: 'learned', label: '✅ Mastered Words' },
+                      { value: 'difficult', label: '⚠️ Need Practice' }
+                    ]}
+                    leftSection={<IconFilter size={16} />}
+                  />
+                </Grid.Col>
+                
+                <Grid.Col span={{ base: 12, sm: 4 }}>
+                  <Select
+                    label="Filter by language"
+                    placeholder="All languages"
+                    value={languageFilter}
+                    onChange={(value: string | null) => setLanguageFilter(value || '')}
+                    data={[
+                      { value: '', label: '🌍 All Languages' },
+                      ...Object.entries(SUPPORTED_LANGUAGES).map(([code, lang]) => ({
+                        value: code,
+                        label: `${lang.flag} ${lang.name}`
+                      }))
+                    ]}
+                    leftSection={<IconGlobe size={16} />}
+                  />
+                </Grid.Col>
+                
+                <Grid.Col span={{ base: 12, sm: 4 }}>
+                  <TextInput
+                    label="Search words"
+                    placeholder="Search original or translation..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    leftSection={<IconSearch size={16} />}
+                  />
+                </Grid.Col>
+              </Grid>
+            </Paper>
+
+            {/* Error Message */}
+            {error && (
+              <Alert color="red" variant="light" mb="md">
+                <Text fw={500} mb="xs">⚠️ Loading Error</Text>
+                <Text size="sm">{error}</Text>
+              </Alert>
+            )}
+
+            {/* Words List */}
+            {wordsLoading ? (
+              <Container style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+                <Stack align="center">
+                  <Loader size="md" />
+                  <Text size="sm" c="dimmed">Loading your words...</Text>
+                </Stack>
+              </Container>
+            ) : userWords?.words.length === 0 ? (
+              <Paper withBorder p="xl" radius="md" style={{ textAlign: 'center' }}>
+                <Text size="4rem" mb="md">📖</Text>
+                <Title order={3} mb="xs">No words found</Title>
+                <Text c="dimmed" mb="md">
+                  {wordsFilter === 'all' 
+                    ? "Start studying to see your vocabulary progress here!"
+                    : wordsFilter === 'learned'
+                    ? "Keep studying to master more words!"
+                    : "Great job! No difficult words found with current filters."
+                  }
+                </Text>
+                <Button 
+                  component={Link} 
+                  href="/languages" 
+                  variant="light"
+                >
+                  Start Studying
+                </Button>
+              </Paper>
+            ) : (
+              <>
+                <ScrollArea style={{ height: '60vh' }}>
+                  <Stack gap="md">
+                    {userWords?.words.map(renderWordCard)}
+                  </Stack>
+                </ScrollArea>
+
+                {/* Pagination */}
+                {userWords && userWords.pagination.total > wordsPerPage && (
+                  <Group justify="center" mt="md">
+                    <Pagination
+                      value={currentPage}
+                      onChange={setCurrentPage}
+                      total={Math.ceil(userWords.pagination.total / wordsPerPage)}
+                      size="sm"
+                    />
+                    <Text size="sm" c="dimmed">
+                      Showing {((currentPage - 1) * wordsPerPage) + 1} - {Math.min(currentPage * wordsPerPage, userWords.pagination.total)} of {userWords.pagination.total} words
+                    </Text>
+                  </Group>
+                )}
+              </>
+            )}
+          </Stack>
+        </Tabs.Panel>
+      </Tabs>
     </Container>
   );
 }
