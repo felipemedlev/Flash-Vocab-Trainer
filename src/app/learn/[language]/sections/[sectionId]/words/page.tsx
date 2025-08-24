@@ -288,12 +288,7 @@ export default function WordsPage() {
           </Group>
           
           {/* Practice Mode Toggle */}
-          <Group justify="center" gap="sm" style={{ 
-            flexWrap: 'wrap',
-            '@media (max-width: 768px)': {
-              justifyContent: 'center'
-            }
-          }}>
+          <Group justify="center" gap="sm" style={{ flexWrap: 'wrap' }}>
             <Text size="sm" fw={500} c="dimmed">
               Practice Mode:
             </Text>
@@ -316,7 +311,7 @@ export default function WordsPage() {
           </Group>
         </Stack>
 
-        <Divider />
+        <Divider my="xs" />
 
         {/* Words Grid */}
         <LoadingOverlay visible={loading} />
@@ -339,9 +334,9 @@ export default function WordsPage() {
                         : 'white')
                 }}
               >
-                <Stack gap="xs" style={{ minHeight: '120px' }}>
+                <Stack gap={4} style={{ minHeight: 'auto' }}>
                   {/* Primary Text (changes based on mode) */}
-                  <div style={{ minHeight: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2px 0' }}>
                     <Text 
                       size="lg" 
                       fw={700} 
@@ -357,23 +352,23 @@ export default function WordsPage() {
 
                   {/* Secondary content area - always reserves space */}
                   <div style={{ 
-                    minHeight: '50px', 
+                    minHeight: '36px', 
                     display: 'flex', 
                     flexDirection: 'column', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    gap: '2px',
+                    gap: '1px',
                     transition: 'opacity 0.3s ease-in-out'
                   }}>
                     <div style={{ 
                       opacity: showTranslations ? 1 : 0,
                       transition: 'opacity 0.3s ease-in-out',
-                      minHeight: '40px',
+                      minHeight: '32px',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '2px'
+                      gap: '1px'
                     }}>
                       {/* Target language word (in reverse mode) */}
                       {reverseMode && (
@@ -406,8 +401,8 @@ export default function WordsPage() {
                   </div>
 
                   {/* Progress Badges */}
-                  <div style={{ minHeight: '28px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <Group justify="center" gap="xs">
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1px 0' }}>
+                    <Group justify="center" gap={4}>
                       {word.progress?.isManuallyLearned && (
                         <Badge color="green" variant="light" size="sm">
                           ✅ Learned
@@ -426,12 +421,6 @@ export default function WordsPage() {
                     </Group>
                   </div>
 
-                  {/* Word Number */}
-                  <div style={{ minHeight: '16px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <Text size="xs" c="dimmed" ta="center">
-                      Word #{((currentPage - 1) * wordsPerPage) + index + 1}
-                    </Text>
-                  </div>
                 </Stack>
               </Card>
             </Grid.Col>
@@ -440,7 +429,7 @@ export default function WordsPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <Group justify="center" mt="xl">
+          <Group justify="center" mt="sm">
             <Pagination
               total={totalPages}
               value={currentPage}
