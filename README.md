@@ -1,150 +1,268 @@
-# Hebrew Flashcard Learning System
+# 🌍 Multilingual Vocabulary Trainer
 
 ## Project Overview
 
-This project showcases a sophisticated Hebrew flashcard learning platform, meticulously engineered to facilitate efficient vocabulary acquisition. It integrates robust user authentication, dynamic content management including custom vocabulary uploads via Excel, and an adaptive smart learning algorithm. Developed with cutting-edge technologies like Next.js 14+ (App Router), Tailwind CSS, and PostgreSQL, this application demonstrates expertise in full-stack development, scalable architecture, and intuitive user experience design.
+A sophisticated **multilingual flashcard learning platform** designed for efficient vocabulary acquisition across multiple languages. This application integrates robust user authentication, dynamic content management, intelligent spaced repetition algorithms, and comprehensive progress tracking. Built with modern technologies including Next.js 15+, TypeScript, PostgreSQL, and Prisma, this platform demonstrates expertise in full-stack development, scalable architecture, and exceptional user experience design.
 
-## Live Demo
+**Specifically designed for the diverse linguistic landscape of Tel Aviv**, supporting Hebrew, Arabic, English, Spanish, French, German, Italian, Russian, Chinese, Portuguese, and Japanese with full RTL language support.
+
+## 🚀 Live Demo
 
 Experience the platform firsthand:
 [https://flash-vocab-trainer.vercel.app/](https://flash-vocab-trainer.vercel.app/)
 
-Explore the intuitive interface, test the smart learning algorithm, and see the custom upload feature in action.
+Test the multilingual interface, explore the intelligent learning algorithms, and experience the comprehensive progress tracking system.
 
-## Features
+## ✨ Key Features
 
-### Core Functionality
-- **Robust User Authentication**: Implemented secure user registration, login, and session management using NextAuth.js, ensuring all user progress and data are securely tied to individual accounts.
-- **Dynamic Content Management**: Provided a rich set of pre-loaded vocabulary sections and enabled users to create custom sections by uploading `.xlsx` and `.xls` files. This feature includes comprehensive server-side validation for file format (enforcing "Hebrew", "English" columns), efficient UTF-8 parsing, intelligent duplicate word handling, and file size constraints.
-- **Adaptive Smart Learning Algorithm**: Developed a sophisticated, performance-driven word frequency system that dynamically adjusts to user interactions.
-    - **Intelligent Spaced Repetition**: Significantly increases the frequency of incorrectly answered words, ensuring repeated exposure until mastery.
-    - **Reinforced Learning**: Decreases word frequency after correct answers, tracking consecutive successful attempts to optimize retention.
-    - **Mastery Recognition**: Words are marked as "learned" after 3 correct answers across distinct study sessions, reducing their appearance for long-term retention.
-    - **User Control**: Allows manual marking of words as learned, providing flexibility in the learning process.
-- **Intuitive Study Interface**: Engineered a highly responsive and user-friendly study environment.
-    - **Flexible Section Selection**: Features a dynamic grid/list view of vocabulary sections, displaying real-time progress statistics (X/Y words learned), clear distinction between default and custom content, and robust search/filter capabilities.
-    - **Customizable Session Setup**: Empowers users to tailor study sessions by selecting lengths (10, 20, 50, custom) and focusing on challenging words or a balanced mix.
-    - **Engaging Flashcard Experience**: Designed a clean, centered flashcard interface with prominent Hebrew word display, full Right-to-Left (RTL) language support, dynamic multiple-choice options (10 English translations + "I don't know"), smooth transitions, an interactive progress bar, and an option to reveal answers.
-    - **Instant Feedback System**: Delivers immediate visual feedback, displays correct answers, incorporates a brief delay for processing, and provides encouraging messages to enhance the learning loop.
-- **Comprehensive Progress Tracking & Analytics**: Integrated a powerful analytics dashboard to provide users with deep insights into their learning journey.
-    - **Performance Dashboard**: Offers an overview of overall progress, words learned vs. total, daily/weekly study streaks, accuracy rates, improvement trends, and detailed section-wise breakdowns.
-    - **Visual Progress Indicators**: Utilizes visual progress bars and color-coding to represent word difficulty (new, learning, mastered), alongside a detailed study session history.
+### 🎯 **Core Multilingual Functionality**
+- **🌐 Multi-Language Support**: Full support for 11 languages including Hebrew, Arabic, Spanish, French, German, Italian, Russian, Chinese, Portuguese, and Japanese
+- **📝 RTL Language Support**: Native right-to-left text rendering for Hebrew and Arabic
+- **🎨 Language-Specific Fonts**: Optimized typography for each supported language
+- **🔄 Dynamic Language Switching**: Seamless switching between languages during study sessions
 
-### Completed Features
-- **Project Setup & Database**: PostgreSQL database setup, schema definition, and pre-loading script for default vocabulary.
-- **User Authentication**: User registration, login, secure session management with NextAuth.js, and user profile management.
-- **Core Learning Features**: Section selection, session setup, main flashcard study interface, and smart learning algorithm.
-- **Content Management**: Excel upload feature for custom sections (frontend and backend API route created, `xlsx` library installed). File validation and error handling for uploads.
-- **Analytics & User Experience**: User dashboard with progress tracking. Additional study modes and gamification elements implemented.
+### 🛡️ **Advanced User Management**
+- **🔐 Secure Authentication**: NextAuth.js implementation with multiple authentication providers
+- **👤 Comprehensive User Profiles**: Detailed progress tracking, learning statistics, and achievement systems
+- **📊 Words Progress Dashboard**: New dedicated section showing learned vs. difficult words with advanced filtering
+- **🎯 Personalized Learning**: Individual progress tracking per language with cross-language analytics
 
-### Key Achievements & Impact
-- **Full-Stack Development**: Successfully designed, developed, and deployed a complete full-stack application, demonstrating end-to-end ownership from database schema to user interface.
-- **Complex Algorithm Implementation**: Engineered and integrated a sophisticated Spaced Repetition System (SM-2 variant) to optimize learning efficiency and retention, showcasing strong algorithmic thinking and problem-solving skills.
-- **Scalable Data Handling**: Implemented robust data management for user-generated content, including secure Excel file uploads with comprehensive validation and efficient parsing for custom vocabulary sections.
-- **Modern Tech Stack Proficiency**: Gained hands-on expertise with Next.js 14+ (App Router), PostgreSQL, Prisma, NextAuth.js, and Tailwind CSS, applying best practices in each technology.
-- **User-Centric Design**: Focused on creating an intuitive and engaging user experience, from customizable study sessions to detailed progress analytics, enhancing user satisfaction and learning outcomes.
+### 🧠 **Intelligent Learning System**
+- **🎲 SM-2 Spaced Repetition Algorithm**: Advanced implementation of the SuperMemo SM-2 algorithm for optimal learning retention
+- **📈 Adaptive Difficulty**: Dynamic word prioritization based on user performance and response times
+- **🔄 Smart Review Scheduling**: Intelligent scheduling of word reviews based on forgetting curves
+- **🎯 Performance Analytics**: Detailed accuracy tracking, response time analysis, and learning curve visualization
 
-### Future Enhancements
-- **Responsive Design & Accessibility**: Committed to ensuring full responsive design across all devices and achieving WCAG 2.1 AA accessibility compliance.
-- **Performance & Security**: Ongoing focus on performance optimization, including code splitting, lazy loading, and API response caching, alongside continuous security hardening measures.
-- **Robustness & Reliability**: Dedicated to thorough final testing, comprehensive bug fixing, and continuous integration/continuous deployment (CI/CD) pipeline enhancements.
-- **Advanced Study Modes**: Plan to implement additional study modes, including English → Hebrew translation and typing exercises, to cater to diverse learning preferences.
-- **Gamification & Engagement**: Future plans include integrating gamification elements such as streaks and achievements to enhance user engagement and motivation.
-- **Data Portability**: Envisioning features for exporting and importing user progress as CSV and custom word sections, providing users with greater control over their data.
+### 📚 **Dynamic Content Management**
+- **📁 Custom Section Creation**: Users can create vocabulary sections for any supported language
+- **📊 Excel/CSV Upload**: Support for .xlsx, .xls, and .csv file uploads with intelligent parsing
+- **✅ Advanced Validation**: File format validation, duplicate detection, and data integrity checks
+- **🏷️ Smart Categorization**: Automatic categorization of words by difficulty and learning status
 
-## Technology Stack
+### 🎮 **Engaging Study Experience**
+- **⚡ Interactive Flashcards**: Modern, responsive flashcard interface with smooth animations
+- **⌨️ Keyboard Shortcuts**: Full keyboard navigation support (1-4, Q-W-E-R keys for quick selection)
+- **📱 Mobile-Optimized**: Fully responsive design optimized for mobile learning
+- **🎨 Visual Feedback**: Immediate color-coded feedback with encouraging messages
+- **⏱️ Session Customization**: Flexible session lengths (10, 20, 50, or custom word counts)
 
-This project leverages a modern and robust technology stack, demonstrating proficiency in full-stack development and scalable application design:
+### 📊 **Comprehensive Analytics & Progress Tracking**
+- **📈 Multi-Language Dashboard**: Overview of progress across all studied languages
+- **🔥 Learning Streaks**: Daily and longest streak tracking with motivational elements
+- **📊 Detailed Word Analytics**: Per-word statistics including accuracy, attempts, and mastery status
+- **🎯 Performance Insights**: Learning velocity, retention rates, and improvement trends
+- **📋 Words Progress Section**: New comprehensive view of learned words and words needing practice with advanced filtering
 
-- **Framework**: Next.js 14+ (with App Router) - Utilized for building a high-performance, SEO-friendly React application with server-side rendering and API routes.
-- **Database**: PostgreSQL - Chosen for its reliability, data integrity, and advanced querying capabilities to manage complex vocabulary and user progress data.
-- **ORM**: Prisma - Employed as a next-generation ORM for type-safe database access, simplifying database interactions and schema management.
-- **Authentication**: NextAuth.js - Integrated for secure and flexible authentication, supporting various providers and robust session management.
-- **Styling**: Tailwind CSS - Used for rapid UI development and consistent, utility-first styling, ensuring a responsive and modern design.
-- **Excel Parsing**: `xlsx` - Implemented for efficient and reliable parsing of Excel files, enabling custom vocabulary uploads.
-- **Package Manager**: pnpm - Standardized for efficient dependency management, optimizing installation times and disk space usage.
-- **Language**: TypeScript - Adopted for enhanced code quality, maintainability, and developer experience through static typing.
+### 🔍 **Advanced Features**
+- **🔍 Smart Search & Filtering**: Search words by original text or translation across languages
+- **📱 Progressive Web App**: Installable PWA for native app-like experience
+- **🌙 Performance Optimized**: Efficient API endpoints with timeout handling and error recovery
+- **🔄 Real-time Updates**: Live progress updates and session statistics
 
-## Architecture
+## 🛠️ Technology Stack
 
-The application is architected on Next.js 14+ with the App Router, promoting a clear separation of concerns and a scalable structure. Key architectural highlights include:
+This platform leverages cutting-edge technologies, demonstrating proficiency in modern full-stack development:
 
-- **Modular Design**: Organized into distinct `app/`, `components/`, `lib/`, `types/`, and `prisma/` directories for maintainability and scalability.
-- **API Routes**: `src/app/api/` houses backend logic for authentication, database operations, and file uploads, ensuring a clean and efficient API layer.
-- **Feature-Driven Frontend**: `src/app/` contains feature-specific pages (e.g., `dashboard/`, `study/`, `upload/`, `auth/`) for a well-structured user interface.
-- **Reusable Components**: `src/components/` centralizes reusable React components for UI elements, flashcards, progress indicators, and layout, fostering consistency and development efficiency.
-- **Core Logic & Utilities**: `src/lib/` encapsulates core application logic, including a shared Prisma client for robust database connections, authentication utilities, and general helper functions.
-- **Type Safety**: `src/types/` defines TypeScript type definitions across the application, enhancing code reliability and developer experience.
-- **Database Management**: `prisma/` manages the database schema (`schema.prisma`), migrations, and seeding scripts (`seed.ts`), ensuring version-controlled and consistent database evolution.
+### **Frontend**
+- **⚡ Next.js 15+** (App Router) - Latest React framework with server-side rendering
+- **🎨 Mantine UI** - Modern React components library with excellent accessibility
+- **💅 Tailwind CSS** - Utility-first CSS framework for rapid UI development
+- **🔷 TypeScript** - Enhanced code quality and developer experience
+
+### **Backend**
+- **🚀 Next.js API Routes** - Serverless API endpoints with built-in optimization
+- **🐘 PostgreSQL** - Robust relational database with advanced querying capabilities
+- **🔗 Prisma ORM** - Type-safe database client with excellent developer experience
+- **🔐 NextAuth.js** - Comprehensive authentication solution
+
+### **DevOps & Tools**
+- **📦 pnpm** - Fast, disk space efficient package manager
+- **🚀 Vercel** - Optimized deployment platform with edge functions
+- **🔄 GitHub Actions** - Automated testing and deployment workflows
+
+### **Advanced Libraries**
+- **📊 xlsx** - Excel file parsing for custom vocabulary uploads
+- **🧠 SM-2 Algorithm** - Custom implementation for spaced repetition
+- **🌐 i18n Ready** - Internationalization support for future expansion
+
+## 🏗️ Architecture
+
+The application follows modern architectural principles with clear separation of concerns:
 
 ```
 src/
 ├── app/
-│   ├── api/             # Backend logic: authentication, database operations, file uploads
-│   │   ├── auth/
-│   │   ├── sections/
-│   │   ├── words/
-│   │   └── progress/
-│   ├── dashboard/       # Feature-specific pages for user interface
-│   ├── study/
-│   ├── upload/
-│   ├── auth/            # Frontend pages for user registration and login
-│   └── ... (other pages like profile, sections)
-├── components/          # Reusable React components (UI, flashcard, progress, layout)
-│   ├── ui/
-│   ├── flashcard/
-│   ├── progress/
-│   └── layout/
-├── lib/                 # Core logic and utilities
-│   ├── db/              # Shared Prisma client for database connections
-│   ├── auth/
-│   └── utils/
-├── types/               # TypeScript type definitions
-└── prisma/              # Manages database schema (schema.prisma), migrations, and seeding script (seed.ts)
+│   ├── api/                 # Backend API routes
+│   │   ├── auth/           # Authentication endpoints
+│   │   ├── sections/       # Section management
+│   │   ├── words/          # Word management
+│   │   ├── progress/       # Learning progress tracking
+│   │   ├── sessions/       # Study session management
+│   │   ├── user-words-simple/ # Optimized word progress API
+│   │   └── upload/         # File upload handling
+│   ├── dashboard/          # User dashboard with analytics
+│   ├── profile/            # User profile with words progress
+│   ├── study/              # Study interface and flashcards
+│   ├── learn/              # Language and section selection
+│   ├── languages/          # Multi-language support pages
+│   └── auth/               # Authentication pages
+├── components/             # Reusable React components
+│   ├── ui/                # UI components (FlashCard, LinearProgress)
+│   └── layout/            # Layout components
+├── lib/                   # Core application logic
+│   ├── db.ts             # Database connection
+│   ├── sm2-algorithm.ts  # Spaced repetition implementation
+│   └── utils/            # Helper functions
+├── config/               # Configuration files
+│   └── languages.ts      # Supported languages configuration
+└── prisma/               # Database schema and migrations
+    ├── schema.prisma     # Database schema
+    └── seed.ts          # Database seeding
 ```
 
-## Setup and Installation
+## 🚀 Setup and Installation
 
-To get this project up and running on your local machine, follow these steps:
+### **Prerequisites**
+- Node.js 18+ 
+- pnpm (recommended) or npm
+- PostgreSQL database
+- Git
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <repository-url>
-    cd ulpanflashcards
-    ```
-2.  **Install dependencies:**
-    This project uses `pnpm` as its package manager.
-    ```bash
-    pnpm install
-    ```
-3.  **Set up the database:**
-    The project uses PostgreSQL with Prisma.
-    ```bash
-    pnpm prisma migrate deploy
-    pnpm prisma db seed
-    ```
-    This will set up the database schema and pre-load default vocabulary.
-4.  **Configure environment variables:**
-    Create a `.env` file in the root directory. You will need to set the `DATABASE_URL` environment variable to your PostgreSQL connection string (e.g., `postgresql://user:password@host:port/database?schema=public`). Also, add other necessary environment variables (e.g., `NEXTAUTH_SECRET`).
-5.  **Run the development server:**
-    ```bash
-    pnpm dev
-    ```
-    Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### **Local Development Setup**
 
-## Usage
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/Flash-Vocab-Trainer.git
+   cd Flash-Vocab-Trainer
+   ```
 
-After setting up the application, you can:
-- Register and log in to your account.
-- Explore pre-loaded Hebrew vocabulary sections.
-- Upload your own custom vocabulary lists via Excel files.
-- Start study sessions with the smart learning algorithm.
-- Track your progress and analytics on the dashboard.
+2. **Install dependencies:**
+   ```bash
+   pnpm install
+   ```
 
-## Contributing
+3. **Set up environment variables:**
+   Create a `.env` file in the root directory:
+   ```env
+   # Database
+   DATABASE_URL="postgresql://username:password@localhost:5432/vocab_trainer"
+   
+   # Authentication
+   NEXTAUTH_SECRET="your-nextauth-secret-here"
+   NEXTAUTH_URL="http://localhost:3000"
+   
+   # Optional: OAuth providers
+   GOOGLE_CLIENT_ID="your-google-client-id"
+   GOOGLE_CLIENT_SECRET="your-google-client-secret"
+   ```
 
-Contributions are welcome! Please feel free to open issues or submit pull requests.
+4. **Set up the database:**
+   ```bash
+   # Generate Prisma client
+   pnpm prisma generate
+   
+   # Run database migrations
+   pnpm prisma migrate deploy
+   
+   # Seed the database with default vocabulary
+   pnpm prisma db seed
+   ```
 
-## License
+5. **Run the development server:**
+   ```bash
+   pnpm dev
+   ```
+   
+   Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+### **Production Deployment**
+
+The application is optimized for deployment on Vercel:
+
+1. **Build the application:**
+   ```bash
+   pnpm build
+   ```
+
+2. **Run production server:**
+   ```bash
+   pnpm start
+   ```
+
+### **Available Scripts**
+
+```bash
+pnpm dev          # Start development server
+pnpm build        # Build for production
+pnpm start        # Start production server
+pnpm lint         # Run ESLint
+pnpm type-check   # Run TypeScript type checking
+pnpm prisma:reset # Reset database and reseed
+pnpm prisma:studio # Open Prisma Studio
+```
+
+## 📱 Usage Guide
+
+### **Getting Started**
+1. **Create Account**: Register with email or OAuth provider
+2. **Choose Language**: Select from 11 supported languages
+3. **Browse Sections**: Explore pre-loaded vocabulary or create custom sections
+4. **Start Learning**: Begin flashcard sessions with customizable settings
+5. **Track Progress**: Monitor your learning journey on the dashboard
+
+### **Key Workflows**
+
+**📚 Creating Custom Vocabulary:**
+- Navigate to language selection → "Create New Section"
+- Upload Excel/CSV files with proper column structure
+- System validates and imports your vocabulary
+
+**🎯 Studying Efficiently:**
+- Select section and session length
+- Use keyboard shortcuts for faster interaction
+- Review progress and difficult words in profile
+
+**📊 Monitoring Progress:**
+- Visit dashboard for overview statistics
+- Check profile → "Words Progress" for detailed analysis
+- Filter by learned/difficult words across languages
+
+## 🌟 Key Achievements
+
+- **🏗️ Full-Stack Architecture**: End-to-end ownership from database design to user interface
+- **🧠 Advanced Algorithm Implementation**: Custom SM-2 spaced repetition system with performance optimizations
+- **🌍 Multilingual Support**: Comprehensive internationalization with RTL language support
+- **📊 Complex Data Management**: Efficient handling of user progress across multiple languages
+- **🚀 Performance Optimization**: Optimized API endpoints with intelligent caching and error handling
+- **🎨 Modern UI/UX**: Responsive design with accessibility considerations
+- **📱 Mobile-First Approach**: Optimized experience across all device sizes
+
+## 🎯 Target Market
+
+**Designed specifically for the Tel Aviv tech ecosystem**, serving:
+- **Language learners** in Israel's multilingual environment
+- **Tech professionals** needing efficient vocabulary acquisition
+- **Educational institutions** requiring scalable learning platforms
+- **International workers** adapting to local languages
+
+## 🔮 Future Roadmap
+
+- **🎮 Gamification**: Achievement systems, leaderboards, and learning challenges
+- **🤖 AI Integration**: Personalized learning recommendations and content generation
+- **🔊 Audio Support**: Pronunciation features and listening exercises
+- **👥 Social Features**: Study groups and collaborative learning
+- **📊 Advanced Analytics**: Machine learning insights and learning pattern analysis
+- **🌐 Extended Language Support**: Addition of more languages based on user demand
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our contributing guidelines and feel free to submit issues or pull requests.
+
+## 📄 License
 
 This project is open-source and available under the [MIT License](LICENSE).
+
+---
+
+**Built with ❤️ for the global learning community**
+*Showcasing modern full-stack development skills for Tel Aviv's innovative tech scene*
