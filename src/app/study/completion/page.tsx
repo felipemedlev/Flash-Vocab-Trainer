@@ -56,6 +56,7 @@ function SessionCompletionContent() {
   const correctAnswers = parseInt(searchParams.get('correctAnswers') || '0');
   const sessionLength = parseInt(searchParams.get('sessionLength') || '0');
   const wordsLearnedInSession = parseInt(searchParams.get('wordsLearnedInSession') || '0');
+  const originalLength = searchParams.get('originalLength') || '10'; // Original word count for the session
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -328,7 +329,7 @@ function SessionCompletionContent() {
         <Button
           size="lg"
           leftSection={<IconRefresh size={20} />}
-          onClick={() => router.push(`/study/${language}/${sectionId}/flashcard`)}
+          onClick={() => router.push(`/study/${language}/${sectionId}/flashcard?length=${originalLength}`)}
           style={{
             background: 'linear-gradient(135deg, #11998e, #38ef7d)',
           }}

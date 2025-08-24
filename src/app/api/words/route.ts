@@ -227,19 +227,32 @@ export async function GET(request: Request) {
 
     // Add new words (never studied) if we have room
     const newWords = wordsWithLearningData
-      .filter(word => word.progress.timesSeen === 0)
+      .filter(word => word.progress.timesSeen === 0 && !reviewWords.some(rw => rw?.id === word.id))
       .sort(() => 0.5 - Math.random())
       .slice(0, Math.max(0, validatedLength - reviewWords.length));
 
-    const wordsToStudy = [...reviewWords, ...newWords];
+    let wordsToStudy = [...reviewWords, ...newWords];
 
-    // Apply session length limit
-    const finalWordsToStudy = wordsToStudy.slice(0, validatedLength);
+    // If we still don't have enough words, add any remaining words from the section
+    if (wordsToStudy.length < validatedLength) {
+      const usedWordIds = new Set(wordsToStudy.map(w => w?.id).filter(Boolean));
+      const remainingWords = wordsWithLearningData
+        .filter(word => !usedWordIds.has(word.id))
+        .sort(() => 0.5 - Math.random())
+        .slice(0, validatedLength - wordsToStudy.length);
+      
+      wordsToStudy = [...wordsToStudy, ...remainingWords];
+    }
+
+    // Apply session length limit and filter out any null/undefined entries
+    const finalWordsToStudy = wordsToStudy.filter(Boolean).slice(0, validatedLength);
 
     // Ensure we have words to study after filtering/slicing
     if (finalWordsToStudy.length === 0 && sectionWordsWithProgress.length > 0) {
-      // Fallback: if no words selected, just pick random words
-      const fallbackWords = sectionWordsWithProgress.sort(() => 0.5 - Math.random()).slice(0, validatedLength);
+      // Fallback: if no words selected, just pick random words (ensuring uniqueness)
+      const fallbackWords = [...sectionWordsWithProgress]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, Math.min(validatedLength, sectionWordsWithProgress.length));
 
       // Get English translations for fallback using helper function
       const fallbackUniqueTranslations = await getSectionEnglishTranslations(parsedSectionId, manuallyLearnedWordIds);

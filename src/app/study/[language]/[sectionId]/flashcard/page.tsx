@@ -283,7 +283,8 @@ export default function FlashcardContent() {
           wordsStudied: finalTotalAnswers.toString(),
           correctAnswers: finalCorrectAnswers.toString(),
           sessionLength: sessionLength.toString(),
-          wordsLearnedInSession: finalWordsLearned.toString()
+          wordsLearnedInSession: finalWordsLearned.toString(),
+          originalLength: sessionLength || '10'
         });
 
         router.push(`/study/completion?${params.toString()}`);
