@@ -284,7 +284,7 @@ export default function FlashcardContent() {
           correctAnswers: finalCorrectAnswers.toString(),
           sessionLength: sessionLength.toString(),
           wordsLearnedInSession: finalWordsLearned.toString(),
-          originalLength: (sessionLength || '10').toString()
+          originalLength: sessionLength || defaultLength.toString()
         });
 
         router.push(`/study/completion?${params.toString()}`);

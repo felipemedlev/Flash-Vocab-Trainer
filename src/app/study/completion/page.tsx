@@ -56,7 +56,7 @@ function SessionCompletionContent() {
   const correctAnswers = parseInt(searchParams.get('correctAnswers') || '0');
   const sessionLength = parseInt(searchParams.get('sessionLength') || '0');
   const wordsLearnedInSession = parseInt(searchParams.get('wordsLearnedInSession') || '0');
-  const originalLength = searchParams.get('originalLength') || '10'; // Original word count for the session
+  const originalLength = searchParams.get('originalLength') || searchParams.get('length') || '10'; // Original word count for the session
 
   useEffect(() => {
     if (status === 'unauthenticated') {

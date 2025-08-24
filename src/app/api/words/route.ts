@@ -177,8 +177,9 @@ export async function GET(request: Request) {
       });
     }
 
-    // Optimize: Limit the number of words fetched based on session length
-    const maxWordsToFetch = validatedLength; // Use validated length
+    // Optimize: Fetch more words than needed to ensure good selection
+    // Fetch 3x the requested amount or at least 50 words for better word selection
+    const maxWordsToFetch = Math.max(validatedLength * 3, 50);
 
     // First, get a count of total words in the section for better decision making
     const totalWordsCount = await retryOperation(() =>
