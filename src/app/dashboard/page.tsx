@@ -181,7 +181,7 @@ export default function DashboardPage() {
   }, [status]);
 
   const handleQuickStudy = () => {
-    router.push('/');
+    router.push('/languages');
   };
 
   if (status === 'loading' || loading) {
