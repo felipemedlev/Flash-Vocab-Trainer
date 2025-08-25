@@ -379,25 +379,18 @@ export default function WordsPage() {
               >
                 <Stack gap={4} style={{ minHeight: 'auto' }}>
                   {/* Primary Text (changes based on mode) */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 0' }}>
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                      <Text 
-                        size="lg" 
-                        fw={700} 
-                        ta="center" 
-                        className={reverseMode ? '' : fontClass}
-                        style={{ 
-                          direction: reverseMode ? 'ltr' : (languageConfig?.isRTL ? 'rtl' : 'ltr')
-                        }}
-                      >
-                        {reverseMode ? word.translationText : word.originalText}
-                      </Text>
-                    </div>
-                    {!shouldShowTranslation(word.wordId) && (
-                      <Text size="xs" c="dimmed" style={{ opacity: 0.7 }}>
-                        👆 Click
-                      </Text>
-                    )}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2px 0' }}>
+                    <Text 
+                      size="lg" 
+                      fw={700} 
+                      ta="center" 
+                      className={reverseMode ? '' : fontClass}
+                      style={{ 
+                        direction: reverseMode ? 'ltr' : (languageConfig?.isRTL ? 'rtl' : 'ltr')
+                      }}
+                    >
+                      {reverseMode ? word.translationText : word.originalText}
+                    </Text>
                   </div>
 
                   {/* Secondary content area - always reserves space */}
