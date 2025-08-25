@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://flash-vocab-trainer.vercel.app',
+    url: 'https://flashcardvocab.org',
     title: 'Flash Vocab Trainer - Master Languages with Smart Flashcards',
     description: 'Transform your language learning with AI-powered spaced repetition. Support for 11 languages including Hebrew, Arabic, Spanish, French, German and more.',
     siteName: 'Flash Vocab Trainer',
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     description: 'Master 11 languages with AI-powered spaced repetition flashcards. Free vocabulary trainer with progress tracking.',
   },
   alternates: {
-    canonical: 'https://flash-vocab-trainer.vercel.app',
+    canonical: 'https://flashcardvocab.org',
   },
   category: 'education',
 };
@@ -64,7 +64,7 @@ export default function RootLayout({
       <head>
         <ColorSchemeScript />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="canonical" href="https://flash-vocab-trainer.vercel.app" />
+        <link rel="canonical" href="https://flashcardvocab.org" />
         <meta name="google-site-verification" content="your-google-verification-code" />
       </head>
       <body

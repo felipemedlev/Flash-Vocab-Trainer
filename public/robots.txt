@@ -16,4 +16,4 @@ Disallow: /study/
 Disallow: /upload
 
 # Sitemap location
-Sitemap: https://flash-vocab-trainer.vercel.app/sitemap.xml
+Sitemap: https://flashcardvocab.org/sitemap.xml

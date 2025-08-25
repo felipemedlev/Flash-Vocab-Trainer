@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://flash-vocab-trainer.vercel.app'
+  const baseUrl = 'https://flashcardvocab.org'
   
   return [
     {
