@@ -73,6 +73,7 @@ export default function WordsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalWords, setTotalWords] = useState(0);
+  const [revealedCards, setRevealedCards] = useState<Set<number>>(new Set());
   const wordsPerPage = 100;
 
   // Get preference key for this language/section combination
@@ -172,6 +173,29 @@ export default function WordsPage() {
       fetchWords();
     }
   }, [status, sectionId, language, currentPage, fetchWords]);
+
+  // Reset revealed cards when page changes
+  useEffect(() => {
+    setRevealedCards(new Set());
+  }, [currentPage]);
+
+  // Toggle individual card reveal
+  const toggleCardReveal = (wordId: number) => {
+    setRevealedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(wordId)) {
+        newSet.delete(wordId);
+      } else {
+        newSet.add(wordId);
+      }
+      return newSet;
+    });
+  };
+
+  // Check if card should show translation
+  const shouldShowTranslation = (wordId: number) => {
+    return showTranslations || revealedCards.has(wordId);
+  };
 
   if (status === 'loading' || loading) {
     return (
@@ -323,31 +347,57 @@ export default function WordsPage() {
                 padding="sm" 
                 radius="md" 
                 withBorder
+                onClick={() => toggleCardReveal(word.wordId)}
                 style={{
                   height: '100%',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                   background: reverseMode 
                     ? (word.progress?.isManuallyLearned 
                         ? 'linear-gradient(135deg, rgba(255, 165, 0, 0.05), rgba(255, 165, 0, 0.15))'
                         : 'linear-gradient(135deg, rgba(255, 165, 0, 0.02), rgba(255, 165, 0, 0.08))')
                     : (word.progress?.isManuallyLearned 
                         ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.1))'
-                        : 'white')
+                        : 'white'),
+                  transform: revealedCards.has(word.wordId) ? 'scale(1.02)' : 'scale(1)',
+                  boxShadow: revealedCards.has(word.wordId) 
+                    ? '0 4px 12px rgba(0, 0, 0, 0.15)' 
+                    : undefined
+                }}
+                onMouseEnter={(e) => {
+                  if (!revealedCards.has(word.wordId)) {
+                    e.currentTarget.style.transform = 'scale(1.01)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!revealedCards.has(word.wordId)) {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = '';
+                  }
                 }}
               >
                 <Stack gap={4} style={{ minHeight: 'auto' }}>
                   {/* Primary Text (changes based on mode) */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2px 0' }}>
-                    <Text 
-                      size="lg" 
-                      fw={700} 
-                      ta="center" 
-                      className={reverseMode ? '' : fontClass}
-                      style={{ 
-                        direction: reverseMode ? 'ltr' : (languageConfig?.isRTL ? 'rtl' : 'ltr')
-                      }}
-                    >
-                      {reverseMode ? word.translationText : word.originalText}
-                    </Text>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 0' }}>
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+                      <Text 
+                        size="lg" 
+                        fw={700} 
+                        ta="center" 
+                        className={reverseMode ? '' : fontClass}
+                        style={{ 
+                          direction: reverseMode ? 'ltr' : (languageConfig?.isRTL ? 'rtl' : 'ltr')
+                        }}
+                      >
+                        {reverseMode ? word.translationText : word.originalText}
+                      </Text>
+                    </div>
+                    {!shouldShowTranslation(word.wordId) && (
+                      <Text size="xs" c="dimmed" style={{ opacity: 0.7 }}>
+                        👆 Click
+                      </Text>
+                    )}
                   </div>
 
                   {/* Secondary content area - always reserves space */}
@@ -361,7 +411,7 @@ export default function WordsPage() {
                     transition: 'opacity 0.3s ease-in-out'
                   }}>
                     <div style={{ 
-                      opacity: showTranslations ? 1 : 0,
+                      opacity: shouldShowTranslation(word.wordId) ? 1 : 0,
                       transition: 'opacity 0.3s ease-in-out',
                       minHeight: '32px',
                       display: 'flex',
