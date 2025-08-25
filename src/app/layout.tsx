@@ -18,8 +18,40 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Flashcard Vocabulary Builder",
-  description: "A comprehensive flashcard learning application",
+  title: "Flash Vocab Trainer - Multilingual Flashcard Learning Platform",
+  description: "Master 11 languages with AI-powered spaced repetition flashcards. Learn Hebrew, Arabic, Spanish, French, German and more. Free vocabulary trainer with progress tracking.",
+  keywords: ["language learning", "flashcards", "vocabulary trainer", "spaced repetition", "Hebrew learning", "Arabic learning", "multilingual", "AI-powered learning", "vocabulary builder"],
+  authors: [{ name: "Flash Vocab Trainer" }],
+  creator: "Flash Vocab Trainer",
+  publisher: "Flash Vocab Trainer",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://flash-vocab-trainer.vercel.app',
+    title: 'Flash Vocab Trainer - Master Languages with Smart Flashcards',
+    description: 'Transform your language learning with AI-powered spaced repetition. Support for 11 languages including Hebrew, Arabic, Spanish, French, German and more.',
+    siteName: 'Flash Vocab Trainer',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Flash Vocab Trainer - Multilingual Learning Platform',
+    description: 'Master 11 languages with AI-powered spaced repetition flashcards. Free vocabulary trainer with progress tracking.',
+  },
+  alternates: {
+    canonical: 'https://flash-vocab-trainer.vercel.app',
+  },
+  category: 'education',
 };
 
 export default function RootLayout({
@@ -31,6 +63,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <ColorSchemeScript />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="canonical" href="https://flash-vocab-trainer.vercel.app" />
+        <meta name="google-site-verification" content="your-google-verification-code" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

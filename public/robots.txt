@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Important pages
+Allow: /
+Allow: /languages
+Allow: /auth/login
+Allow: /auth/register
+
+# Block admin and private paths
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /learn/
+Disallow: /study/
+Disallow: /upload
+
+# Sitemap location
+Sitemap: https://flash-vocab-trainer.vercel.app/sitemap.xml
