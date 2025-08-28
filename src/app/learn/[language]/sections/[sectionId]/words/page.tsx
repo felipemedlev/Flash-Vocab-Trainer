@@ -21,11 +21,29 @@ import {
   Affix,
   ActionIcon,
   Tooltip,
-  Switch
+  Switch,
+  TextInput,
+  Modal
 } from '@mantine/core';
-import { IconArrowLeft, IconBook, IconEye, IconEyeOff, IconEdit, IconToggleLeft, IconToggleRight } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
+import { useDisclosure } from '@mantine/hooks';
+import { 
+  IconArrowLeft, 
+  IconBook, 
+  IconEye, 
+  IconEyeOff, 
+  IconEdit, 
+  IconToggleLeft, 
+  IconToggleRight,
+  IconTrash,
+  IconCheck,
+  IconX,
+  IconDeviceFloppy,
+  IconPlus
+} from '@tabler/icons-react';
 import { getLanguageConfig, isValidLanguageCode, getLanguageFontClass } from '@/config/languages';
 import Link from 'next/link';
+import WordInput from '@/components/WordInput';
 
 interface Word {
   wordId: number;
@@ -42,6 +60,18 @@ interface Word {
     repetition: number;
   };
 }
+
+interface EditingWord {
+  wordId: number;
+  originalText: string;
+  translationText: string;
+  pronunciation?: string;
+  originalOriginalText: string;
+  originalTranslationText: string;
+  originalPronunciation?: string;
+  hasChanges: boolean;
+}
+
 
 interface SectionInfo {
   id: number;
@@ -74,6 +104,12 @@ export default function WordsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalWords, setTotalWords] = useState(0);
   const [revealedCards, setRevealedCards] = useState<Set<number>>(new Set());
+  const [editingWords, setEditingWords] = useState<Map<number, EditingWord>>(new Map());
+  const [saving, setSaving] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [showAddWords, setShowAddWords] = useState(false);
+  const [confirmModalOpened, { open: openConfirmModal, close: closeConfirmModal }] = useDisclosure(false);
+  const [wordToDelete, setWordToDelete] = useState<number | null>(null);
   const wordsPerPage = 100;
 
   // Get preference key for this language/section combination
@@ -141,10 +177,10 @@ export default function WordsPage() {
         setTotalPages(data.totalPages || 1);
       } else {
         setWords(data);
-        if (sectionInfo) {
-          setTotalWords(sectionInfo.totalWords);
-          setTotalPages(Math.ceil(sectionInfo.totalWords / wordsPerPage));
-        }
+        // We'll calculate total pages based on the response data instead of sectionInfo
+        const totalWordsCount = data.length;
+        setTotalWords(totalWordsCount);
+        setTotalPages(Math.ceil(totalWordsCount / wordsPerPage));
       }
     } catch (error) {
       console.error('Error fetching words:', error);
@@ -152,7 +188,7 @@ export default function WordsPage() {
     } finally {
       setLoading(false);
     }
-  }, [sectionId, language, currentPage, wordsPerPage, sectionInfo]);
+  }, [sectionId, language, currentPage, wordsPerPage]);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -165,14 +201,15 @@ export default function WordsPage() {
   useEffect(() => {
     if (status === 'authenticated' && sectionId && language) {
       setCurrentPage(1);
-    }
-  }, [status, sectionId, language]);
-
-  useEffect(() => {
-    if (status === 'authenticated' && sectionId && language) {
       fetchWords();
     }
-  }, [status, sectionId, language, currentPage, fetchWords]);
+  }, [status, sectionId, language, fetchWords]);
+
+  useEffect(() => {
+    if (status === 'authenticated' && sectionId && language && currentPage > 1) {
+      fetchWords();
+    }
+  }, [currentPage, fetchWords, status, sectionId, language]);
 
   // Reset revealed cards when page changes
   useEffect(() => {
@@ -196,6 +233,204 @@ export default function WordsPage() {
   const shouldShowTranslation = (wordId: number) => {
     return showTranslations || revealedCards.has(wordId);
   };
+
+  // Editing functions
+  const startEditing = (word: Word) => {
+    const editingWord: EditingWord = {
+      wordId: word.wordId,
+      originalText: word.originalText,
+      translationText: word.translationText,
+      pronunciation: word.pronunciation,
+      originalOriginalText: word.originalText,
+      originalTranslationText: word.translationText,
+      originalPronunciation: word.pronunciation,
+      hasChanges: false
+    };
+    
+    setEditingWords(prev => new Map(prev.set(word.wordId, editingWord)));
+  };
+
+  const updateEditingWord = (wordId: number, field: 'originalText' | 'translationText' | 'pronunciation', value: string) => {
+    setEditingWords(prev => {
+      const newMap = new Map(prev);
+      const editingWord = newMap.get(wordId);
+      if (editingWord) {
+        const updatedWord = { ...editingWord, [field]: value };
+        updatedWord.hasChanges = 
+          updatedWord.originalText !== updatedWord.originalOriginalText || 
+          updatedWord.translationText !== updatedWord.originalTranslationText ||
+          updatedWord.pronunciation !== updatedWord.originalPronunciation;
+        newMap.set(wordId, updatedWord);
+      }
+      return newMap;
+    });
+  };
+
+  const cancelEditing = (wordId: number) => {
+    setEditingWords(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(wordId);
+      return newMap;
+    });
+  };
+
+  const saveWord = async (wordId: number) => {
+    const editingWord = editingWords.get(wordId);
+    if (!editingWord || !editingWord.hasChanges) return;
+
+    try {
+      setSaving(true);
+      const response = await fetch(`/api/words/${wordId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          originalText: editingWord.originalText.trim(),
+          translationText: editingWord.translationText.trim(),
+          pronunciation: editingWord.pronunciation?.trim() || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update word');
+      }
+
+      // Update the words list
+      setWords(prev => prev.map(word => 
+        word.wordId === wordId 
+          ? { ...word, originalText: editingWord.originalText, translationText: editingWord.translationText, pronunciation: editingWord.pronunciation }
+          : word
+      ));
+
+      // Remove from editing
+      cancelEditing(wordId);
+
+      notifications.show({
+        title: 'Success',
+        message: 'Word updated successfully',
+        color: 'green',
+        icon: <IconCheck size={16} />,
+      });
+    } catch (error) {
+      console.error('Error saving word:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to update word',
+        color: 'red',
+        icon: <IconX size={16} />,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteWord = async (wordId: number) => {
+    try {
+      setSaving(true);
+      const response = await fetch(`/api/words/${wordId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete word');
+      }
+
+      // Remove from words list
+      setWords(prev => prev.filter(word => word.wordId !== wordId));
+      
+      // Remove from editing if it was being edited
+      cancelEditing(wordId);
+
+      // Update total count
+      setTotalWords(prev => prev - 1);
+
+      notifications.show({
+        title: 'Success',
+        message: 'Word deleted successfully',
+        color: 'green',
+        icon: <IconCheck size={16} />,
+      });
+    } catch (error) {
+      console.error('Error deleting word:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to delete word',
+        color: 'red',
+        icon: <IconX size={16} />,
+      });
+    } finally {
+      setSaving(false);
+      closeConfirmModal();
+      setWordToDelete(null);
+    }
+  };
+
+  const handleDeleteClick = (wordId: number) => {
+    setWordToDelete(wordId);
+    openConfirmModal();
+  };
+
+
+  const saveAllChanges = async () => {
+    const changedWords = Array.from(editingWords.values()).filter(word => word.hasChanges);
+    if (changedWords.length === 0) return;
+
+    try {
+      setSaving(true);
+      const updatePromises = changedWords.map(word => 
+        fetch(`/api/words/${word.wordId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            originalText: word.originalText.trim(),
+            translationText: word.translationText.trim(),
+            pronunciation: word.pronunciation?.trim() || undefined,
+          }),
+        })
+      );
+
+      const responses = await Promise.all(updatePromises);
+      const failedUpdates = responses.filter(response => !response.ok);
+
+      if (failedUpdates.length > 0) {
+        throw new Error(`Failed to update ${failedUpdates.length} words`);
+      }
+
+      // Update the words list
+      setWords(prev => prev.map(word => {
+        const editingWord = editingWords.get(word.wordId);
+        if (editingWord && editingWord.hasChanges) {
+          return { ...word, originalText: editingWord.originalText, translationText: editingWord.translationText, pronunciation: editingWord.pronunciation };
+        }
+        return word;
+      }));
+
+      // Clear all editing states
+      setEditingWords(new Map());
+
+      notifications.show({
+        title: 'Success',
+        message: `Successfully updated ${changedWords.length} words`,
+        color: 'green',
+        icon: <IconCheck size={16} />,
+      });
+    } catch (error) {
+      console.error('Error saving words:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to save some changes',
+        color: 'red',
+        icon: <IconX size={16} />,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const hasUnsavedChanges = Array.from(editingWords.values()).some(word => word.hasChanges);
 
   if (status === 'loading' || loading) {
     return (
@@ -234,9 +469,9 @@ export default function WordsPage() {
               <Button 
                 variant="subtle" 
                 leftSection={<IconArrowLeft size={16} />}
-                onClick={() => router.push(`/learn/${language}/sections`)}
+                onClick={() => router.push(`/study/${language}/${sectionId}`)}
               >
-                Back to Sections
+                Back to Section
               </Button>
               {sectionInfo && (
                 <Badge color="blue" variant="light">
@@ -253,14 +488,35 @@ export default function WordsPage() {
               </Text>
             )}
           </div>
-          <Button
-            leftSection={<IconEdit size={16} />}
-            component={Link}
-            href={`/learn/${language}/sections/${sectionId}/words/edit`}
-            variant="light"
-          >
-            Edit Words
-          </Button>
+          <Group gap="sm">
+            <Button
+              leftSection={<IconPlus size={16} />}
+              onClick={() => setShowAddWords(!showAddWords)}
+              color="green"
+              variant={showAddWords ? "filled" : "light"}
+            >
+              {showAddWords ? 'Hide Add Words' : 'Add Words'}
+            </Button>
+            <Button
+              leftSection={editMode ? <IconEye size={16} /> : <IconEdit size={16} />}
+              onClick={() => setEditMode(!editMode)}
+              variant={editMode ? "filled" : "light"}
+              color={editMode ? "orange" : "blue"}
+            >
+              {editMode ? 'View Mode' : 'Edit Mode'}
+            </Button>
+            {hasUnsavedChanges && (
+              <Button
+                leftSection={<IconDeviceFloppy size={16} />}
+                onClick={saveAllChanges}
+                loading={saving}
+                color="green"
+                variant="filled"
+              >
+                Save All
+              </Button>
+            )}
+          </Group>
         </Group>
 
         {/* Stats */}
@@ -335,139 +591,277 @@ export default function WordsPage() {
           </Group>
         </Stack>
 
+        {/* Add Words Section */}
+        {showAddWords && (
+          <>
+            <Paper p="lg" withBorder radius="md" style={{ backgroundColor: 'rgba(34, 197, 94, 0.02)' }}>
+              <WordInput 
+                sectionId={sectionId}
+                language={language}
+                onWordsSaved={() => {
+                  fetchWords();
+                  fetchSectionInfo();
+                }}
+              />
+            </Paper>
+            <Divider />
+          </>
+        )}
+
         <Divider my="xs" />
 
         {/* Words Grid */}
         <LoadingOverlay visible={loading} />
         <Grid gutter="xs">
-          {words.map((word, index) => (
-            <Grid.Col key={word.wordId} span={{ base: 12, sm: 6, md: 4 }}>
-              <Card 
-                shadow="sm" 
-                padding="sm" 
-                radius="md" 
-                withBorder
-                onClick={() => toggleCardReveal(word.wordId)}
-                style={{
-                  height: '100%',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  background: reverseMode 
-                    ? (word.progress?.isManuallyLearned 
-                        ? 'linear-gradient(135deg, rgba(255, 165, 0, 0.05), rgba(255, 165, 0, 0.15))'
-                        : 'linear-gradient(135deg, rgba(255, 165, 0, 0.02), rgba(255, 165, 0, 0.08))')
-                    : (word.progress?.isManuallyLearned 
-                        ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.1))'
-                        : 'white'),
-                  transform: revealedCards.has(word.wordId) ? 'scale(1.02)' : 'scale(1)',
-                  boxShadow: revealedCards.has(word.wordId) 
-                    ? '0 4px 12px rgba(0, 0, 0, 0.15)' 
-                    : undefined
-                }}
-                onMouseEnter={(e) => {
-                  if (!revealedCards.has(word.wordId)) {
-                    e.currentTarget.style.transform = 'scale(1.01)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!revealedCards.has(word.wordId)) {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = '';
-                  }
-                }}
-              >
-                <Stack gap={4} style={{ minHeight: 'auto' }}>
-                  {/* Primary Text (changes based on mode) */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2px 0' }}>
-                    <Text 
-                      size="lg" 
-                      fw={700} 
-                      ta="center" 
-                      className={reverseMode ? '' : fontClass}
-                      style={{ 
-                        direction: reverseMode ? 'ltr' : (languageConfig?.isRTL ? 'rtl' : 'ltr')
-                      }}
-                    >
-                      {reverseMode ? word.translationText : word.originalText}
-                    </Text>
-                  </div>
+          {words.map((word, index) => {
+            const editingWord = editingWords.get(word.wordId);
+            const isEditing = !!editingWord;
 
-                  {/* Secondary content area - always reserves space */}
-                  <div style={{ 
-                    minHeight: '36px', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    gap: '1px',
-                    transition: 'opacity 0.3s ease-in-out'
-                  }}>
-                    <div style={{ 
-                      opacity: shouldShowTranslation(word.wordId) ? 1 : 0,
-                      transition: 'opacity 0.3s ease-in-out',
-                      minHeight: '32px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '1px'
-                    }}>
-                      {/* Target language word (in reverse mode) */}
-                      {reverseMode && (
+            return (
+              <Grid.Col key={word.wordId} span={{ base: 12, sm: 6, md: 4 }}>
+                <Card 
+                  shadow="sm" 
+                  padding={editMode ? "lg" : "sm"} 
+                  radius="md" 
+                  withBorder
+                  onClick={editMode ? undefined : () => toggleCardReveal(word.wordId)}
+                  style={{
+                    height: '100%',
+                    cursor: editMode ? 'default' : 'pointer',
+                    transition: 'all 0.2s ease',
+                    background: editMode && editingWord?.hasChanges 
+                      ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.05), rgba(255, 193, 7, 0.1))'
+                      : reverseMode 
+                        ? (word.progress?.isManuallyLearned 
+                            ? 'linear-gradient(135deg, rgba(255, 165, 0, 0.05), rgba(255, 165, 0, 0.15))'
+                            : 'linear-gradient(135deg, rgba(255, 165, 0, 0.02), rgba(255, 165, 0, 0.08))')
+                        : (word.progress?.isManuallyLearned 
+                            ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.1))'
+                            : 'white'),
+                    transform: !editMode && revealedCards.has(word.wordId) ? 'scale(1.02)' : 'scale(1)',
+                    boxShadow: !editMode && revealedCards.has(word.wordId) 
+                      ? '0 4px 12px rgba(0, 0, 0, 0.15)' 
+                      : undefined
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!editMode && !revealedCards.has(word.wordId)) {
+                      e.currentTarget.style.transform = 'scale(1.01)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!editMode && !revealedCards.has(word.wordId)) {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '';
+                    }
+                  }}
+                >
+                  {editMode ? (
+                    <Stack gap="xs">
+                      {/* Original Text */}
+                      <div>
+                        {isEditing ? (
+                          <TextInput
+                            value={editingWord.originalText}
+                            onChange={(e) => updateEditingWord(word.wordId, 'originalText', e.target.value)}
+                            placeholder="Original text"
+                            className={fontClass}
+                            size="md"
+                            fw={700}
+                          />
+                        ) : (
+                          <Text 
+                            size="lg" 
+                            fw={700} 
+                            ta="center" 
+                            className={fontClass}
+                            style={{ direction: languageConfig?.isRTL ? 'rtl' : 'ltr' }}
+                          >
+                            {word.originalText}
+                          </Text>
+                        )}
+                      </div>
+
+                      {/* Translation */}
+                      <div>
+                        {isEditing ? (
+                          <TextInput
+                            value={editingWord.translationText}
+                            onChange={(e) => updateEditingWord(word.wordId, 'translationText', e.target.value)}
+                            placeholder="English translation"
+                            size="md"
+                          />
+                        ) : (
+                          <Text size="md" c="dimmed" ta="center">
+                            {word.translationText}
+                          </Text>
+                        )}
+                      </div>
+
+                      {/* Pronunciation */}
+                      <div>
+                        {isEditing ? (
+                          <TextInput
+                            value={editingWord.pronunciation || ''}
+                            onChange={(e) => updateEditingWord(word.wordId, 'pronunciation', e.target.value)}
+                            placeholder="Pronunciation (optional)"
+                            size="sm"
+                          />
+                        ) : (
+                          word.pronunciation && (
+                            <Text size="sm" c="dimmed" ta="center" fs="italic">
+                              [{word.pronunciation}]
+                            </Text>
+                          )
+                        )}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <Group justify="center" gap="xs" mt="sm">
+                        {isEditing ? (
+                          <>
+                            <Button
+                              size="xs"
+                              color="green"
+                              leftSection={<IconCheck size={12} />}
+                              onClick={() => saveWord(word.wordId)}
+                              disabled={!editingWord.hasChanges}
+                              loading={saving}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="light"
+                              color="gray"
+                              leftSection={<IconX size={12} />}
+                              onClick={() => cancelEditing(word.wordId)}
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              size="xs"
+                              variant="light"
+                              leftSection={<IconEdit size={12} />}
+                              onClick={() => startEditing(word)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="xs"
+                              variant="light"
+                              color="red"
+                              leftSection={<IconTrash size={12} />}
+                              onClick={() => handleDeleteClick(word.wordId)}
+                            >
+                              Delete
+                            </Button>
+                          </>
+                        )}
+                      </Group>
+
+                      {/* Word Number */}
+                      <Text size="xs" c="dimmed" ta="center">
+                        Word #{((currentPage - 1) * wordsPerPage) + index + 1}
+                      </Text>
+                    </Stack>
+                  ) : (
+                    <Stack gap={4} style={{ minHeight: 'auto' }}>
+                      {/* Primary Text (changes based on mode) */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2px 0' }}>
                         <Text 
-                          size="md" 
-                          c="orange.7" 
+                          size="lg" 
+                          fw={700} 
                           ta="center" 
-                          fw={600}
-                          className={fontClass}
-                          style={{ direction: languageConfig?.isRTL ? 'rtl' : 'ltr' }}
+                          className={reverseMode ? '' : fontClass}
+                          style={{ 
+                            direction: reverseMode ? 'ltr' : (languageConfig?.isRTL ? 'rtl' : 'ltr')
+                          }}
                         >
-                          {word.originalText}
+                          {reverseMode ? word.translationText : word.originalText}
                         </Text>
-                      )}
+                      </div>
 
-                      {/* Pronunciation - only in reverse mode when revealed */}
-                      {reverseMode && word.pronunciation && (
-                        <Text size="sm" c="orange.6" ta="center" fs="italic">
-                          [{word.pronunciation}]
-                        </Text>
-                      )}
+                      {/* Secondary content area - always reserves space */}
+                      <div style={{ 
+                        minHeight: '36px', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '1px',
+                        transition: 'opacity 0.3s ease-in-out'
+                      }}>
+                        <div style={{ 
+                          opacity: shouldShowTranslation(word.wordId) ? 1 : 0,
+                          transition: 'opacity 0.3s ease-in-out',
+                          minHeight: '32px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '1px'
+                        }}>
+                          {/* Target language word (in reverse mode) */}
+                          {reverseMode && (
+                            <Text 
+                              size="md" 
+                              c="orange.7" 
+                              ta="center" 
+                              fw={600}
+                              className={fontClass}
+                              style={{ direction: languageConfig?.isRTL ? 'rtl' : 'ltr' }}
+                            >
+                              {word.originalText}
+                            </Text>
+                          )}
 
-                      {/* Translation - only in normal mode when revealed */}
-                      {!reverseMode && (
-                        <Text size="md" c="dimmed" ta="center">
-                          {word.translationText}
-                        </Text>
-                      )}
-                    </div>
-                  </div>
+                          {/* Pronunciation - only in reverse mode when revealed */}
+                          {reverseMode && word.pronunciation && (
+                            <Text size="sm" c="orange.6" ta="center" fs="italic">
+                              [{word.pronunciation}]
+                            </Text>
+                          )}
 
-                  {/* Progress Badges */}
-                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1px 0' }}>
-                    <Group justify="center" gap={4}>
-                      {word.progress?.isManuallyLearned && (
-                        <Badge color="green" variant="light" size="sm">
-                          ✅ Learned
-                        </Badge>
-                      )}
-                      {word.progress && word.progress.timesSeen > 0 && (
-                        <Badge color="blue" variant="light" size="sm">
-                          👁️ {word.progress.timesSeen} seen
-                        </Badge>
-                      )}
-                      {word.progress && (word.progress.correctCount > 0 || word.progress.incorrectCount > 0) && (
-                        <Badge color="orange" variant="light" size="sm">
-                          📊 {word.progress.correctCount}/{word.progress.correctCount + word.progress.incorrectCount}
-                        </Badge>
-                      )}
-                    </Group>
-                  </div>
+                          {/* Translation - only in normal mode when revealed */}
+                          {!reverseMode && (
+                            <Text size="md" c="dimmed" ta="center">
+                              {word.translationText}
+                            </Text>
+                          )}
+                        </div>
+                      </div>
 
-                </Stack>
-              </Card>
-            </Grid.Col>
-          ))}
+                      {/* Progress Badges */}
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '1px 0' }}>
+                        <Group justify="center" gap={4}>
+                          {word.progress?.isManuallyLearned && (
+                            <Badge color="green" variant="light" size="sm">
+                              ✅ Learned
+                            </Badge>
+                          )}
+                          {word.progress && word.progress.timesSeen > 0 && (
+                            <Badge color="blue" variant="light" size="sm">
+                              👁️ {word.progress.timesSeen} seen
+                            </Badge>
+                          )}
+                          {word.progress && (word.progress.correctCount > 0 || word.progress.incorrectCount > 0) && (
+                            <Badge color="orange" variant="light" size="sm">
+                              📊 {word.progress.correctCount}/{word.progress.correctCount + word.progress.incorrectCount}
+                            </Badge>
+                          )}
+                        </Group>
+                      </div>
+
+                    </Stack>
+                  )}
+                </Card>
+              </Grid.Col>
+            );
+          })}
         </Grid>
 
         {/* Pagination */}
@@ -503,41 +897,103 @@ export default function WordsPage() {
           </Paper>
         )}
 
-        {/* Floating Translation Toggle Button */}
-        <Affix position={{ bottom: 20, right: 20 }}>
-          <Tooltip
-            label={
-              showTranslations 
-                ? (reverseMode ? `Hide ${languageConfig?.name} + Pronunciation` : 'Hide Translations')
-                : (reverseMode ? `Show ${languageConfig?.name} + Pronunciation` : 'Show Translations')
-            }
-            position="left"
-            withArrow
-          >
-            <ActionIcon
-              size="xl"
-              radius="xl"
-              variant="filled"
-              color={showTranslations ? (reverseMode ? "orange" : "blue") : "gray"}
-              onClick={() => setShowTranslations(!showTranslations)}
-              style={{
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.1)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-              }}
+        {/* Floating Buttons */}
+        {!editMode && (
+          <Affix position={{ bottom: 20, right: 20 }}>
+            <Tooltip
+              label={
+                showTranslations 
+                  ? (reverseMode ? `Hide ${languageConfig?.name} + Pronunciation` : 'Hide Translations')
+                  : (reverseMode ? `Show ${languageConfig?.name} + Pronunciation` : 'Show Translations')
+              }
+              position="left"
+              withArrow
             >
-              {showTranslations ? <IconEyeOff size={24} /> : <IconEye size={24} />}
-            </ActionIcon>
-          </Tooltip>
-        </Affix>
+              <ActionIcon
+                size="xl"
+                radius="xl"
+                variant="filled"
+                color={showTranslations ? (reverseMode ? "orange" : "blue") : "gray"}
+                onClick={() => setShowTranslations(!showTranslations)}
+                style={{
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                }}
+              >
+                {showTranslations ? <IconEyeOff size={24} /> : <IconEye size={24} />}
+              </ActionIcon>
+            </Tooltip>
+          </Affix>
+        )}
+
+        {/* Floating Save Button */}
+        {editMode && hasUnsavedChanges && (
+          <Affix position={{ bottom: 20, right: 20 }}>
+            <Tooltip
+              label="Save All Changes"
+              position="left"
+              withArrow
+            >
+              <ActionIcon
+                size="xl"
+                radius="xl"
+                variant="filled"
+                color="green"
+                onClick={saveAllChanges}
+                loading={saving}
+                style={{
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                }}
+              >
+                <IconDeviceFloppy size={24} />
+              </ActionIcon>
+            </Tooltip>
+          </Affix>
+        )}
       </Stack>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        opened={confirmModalOpened}
+        onClose={closeConfirmModal}
+        title="Confirm Deletion"
+        centered
+      >
+        <Stack gap="md">
+          <Text>
+            Are you sure you want to delete this word? This action cannot be undone.
+          </Text>
+          <Group justify="flex-end" gap="sm">
+            <Button variant="light" onClick={closeConfirmModal}>
+              Cancel
+            </Button>
+            <Button 
+              color="red" 
+              onClick={() => wordToDelete && deleteWord(wordToDelete)}
+              loading={saving}
+            >
+              Delete Word
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Container>
   );
 }

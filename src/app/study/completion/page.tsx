@@ -329,7 +329,7 @@ function SessionCompletionContent() {
         <Button
           size="lg"
           leftSection={<IconRefresh size={20} />}
-          onClick={() => router.push(`/study/${language}/${sectionId}/flashcard?length=${originalLength}`)}
+          onClick={() => router.push(`/study/${language}/${sectionId}`)}
           style={{
             background: 'linear-gradient(135deg, #11998e, #38ef7d)',
           }}

@@ -27,7 +27,6 @@ import {
   IconInfoCircle,
   IconArrowLeft,
   IconEye,
-  IconEdit,
   IconUpload,
   IconStar
 } from '@tabler/icons-react';
@@ -445,17 +444,6 @@ export default function LanguageSectionsPage() {
                             </ActionIcon>
                           </Tooltip>
 
-                          <Tooltip label="Edit Words">
-                            <ActionIcon
-                              component={Link}
-                              href={`/learn/${language}/sections/${section.id}/words/edit`}
-                              variant="light"
-                              size="lg"
-                              color="orange"
-                            >
-                              <IconEdit size={16} />
-                            </ActionIcon>
-                          </Tooltip>
                         </Group>
                       </Stack>
                     </Card>

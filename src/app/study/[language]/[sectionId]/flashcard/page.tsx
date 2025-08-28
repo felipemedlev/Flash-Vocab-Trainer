@@ -317,16 +317,10 @@ export default function FlashcardContent() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full space-y-4">
+      <div className="flex flex-col items-center justify-center h-full space-y-4" style={{ paddingTop: '80px' }}>
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         <Text size="lg">Preparing your study session...</Text>
         <Text size="sm" c="dimmed">Finding the best words for you to learn</Text>
-        <div className="w-64 bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${loadingProgress}%` }}
-          ></div>
-        </div>
         <Text size="xs" c="dimmed">This may take a few seconds for large sections</Text>
       </div>
     );
