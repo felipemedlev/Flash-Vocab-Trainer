@@ -201,9 +201,14 @@ export default function WordsPage() {
   useEffect(() => {
     if (status === 'authenticated' && sectionId && language) {
       setCurrentPage(1);
+    }
+  }, [status, sectionId, language]);
+
+  useEffect(() => {
+    if (status === 'authenticated' && sectionId && language && currentPage === 1) {
       fetchWords();
     }
-  }, [status, sectionId, language, fetchWords]);
+  }, [status, sectionId, language, currentPage, fetchWords]);
 
   useEffect(() => {
     if (status === 'authenticated' && sectionId && language && currentPage > 1) {

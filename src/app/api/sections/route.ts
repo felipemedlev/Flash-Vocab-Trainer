@@ -50,15 +50,14 @@ export async function GET(request: NextRequest) {
               where: {
                 userId: parseInt(session.user.id),
               },
+              orderBy: {
+                lastSeen: 'desc'
+              },
               take: 1,
             },
           },
         }
       },
-      orderBy: [
-        { isDefault: 'desc' },
-        { createdAt: 'desc' }
-      ]
     });
 
     const sectionsWithProgress = sections.map((section: Section & { 
@@ -69,6 +68,17 @@ export async function GET(request: NextRequest) {
       const learnedWords = section.words.filter(word => 
         word.progress.some(p => p.isManuallyLearned)
       ).length;
+      
+      // Find the most recent lastSeen date across all words in this section
+      const lastStudied = section.words
+        .flatMap(word => word.progress)
+        .filter(progress => progress.lastSeen)
+        .reduce((latest, progress) => {
+          if (!progress.lastSeen) return latest;
+          if (!latest) return progress.lastSeen;
+          return progress.lastSeen > latest ? progress.lastSeen : latest;
+        }, null as Date | null);
+
       return {
         id: section.id,
         name: section.name,
@@ -83,10 +93,31 @@ export async function GET(request: NextRequest) {
         },
         totalWords,
         learnedWords,
+        lastStudied,
       };
     });
 
-    return NextResponse.json(sectionsWithProgress);
+    // Sort sections: latest studied first, then default sections, then by creation date
+    const sortedSections = sectionsWithProgress.sort((a, b) => {
+      // If both have been studied, sort by most recent first
+      if (a.lastStudied && b.lastStudied) {
+        return new Date(b.lastStudied).getTime() - new Date(a.lastStudied).getTime();
+      }
+      
+      // If only one has been studied, it goes first
+      if (a.lastStudied && !b.lastStudied) return -1;
+      if (!a.lastStudied && b.lastStudied) return 1;
+      
+      // If neither has been studied, sort by default status first, then creation date
+      if (a.isDefault !== b.isDefault) {
+        return a.isDefault ? -1 : 1;
+      }
+      
+      // Fall back to creation date (assuming id is incremental and reflects creation order)
+      return b.id - a.id;
+    });
+
+    return NextResponse.json(sortedSections);
   } catch (error) {
     console.error('Error fetching sections:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });

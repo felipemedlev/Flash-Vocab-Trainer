@@ -42,6 +42,7 @@ interface Section {
   totalWords: number;
   learnedWords: number;
   languageId: number;
+  lastStudied: string | null;
 }
 
 export default function LanguageSectionsPage() {
