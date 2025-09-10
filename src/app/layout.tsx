@@ -18,12 +18,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Flash Vocab Trainer - Multilingual Flashcard Learning Platform",
-  description: "Master 11 languages with AI-powered spaced repetition flashcards. Learn Hebrew, Arabic, Spanish, French, German and more. Free vocabulary trainer with progress tracking.",
-  keywords: ["language learning", "flashcards", "vocabulary trainer", "spaced repetition", "Hebrew learning", "Arabic learning", "multilingual", "AI-powered learning", "vocabulary builder"],
-  authors: [{ name: "Flash Vocab Trainer" }],
-  creator: "Flash Vocab Trainer",
-  publisher: "Flash Vocab Trainer",
+  title: "VocabBuilder - Complete Vocabulary Learning Platform",
+  description: "Build and organize vocabulary across 11 languages. Upload custom Excel/CSV files, create sections, practice with multiple study modes. Hebrew, Arabic, Spanish, French, German and more.",
+  keywords: ["vocabulary builder", "language learning", "custom vocabulary", "Excel upload", "vocabulary organizer", "Hebrew learning", "Arabic learning", "multilingual", "vocabulary management", "study modes"],
+  authors: [{ name: "VocabBuilder" }],
+  creator: "VocabBuilder",
+  publisher: "VocabBuilder",
   robots: {
     index: true,
     follow: true,
@@ -39,14 +39,14 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://flashcardvocab.org',
-    title: 'Flash Vocab Trainer - Master Languages with Smart Flashcards',
-    description: 'Transform your language learning with AI-powered spaced repetition. Support for 11 languages including Hebrew, Arabic, Spanish, French, German and more.',
-    siteName: 'Flash Vocab Trainer',
+    title: 'VocabBuilder - Complete Vocabulary Learning Platform',
+    description: 'Build and organize vocabulary your way. Upload custom Excel/CSV files, create sections, and practice with multiple study modes across 11 languages.',
+    siteName: 'VocabBuilder',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Flash Vocab Trainer - Multilingual Learning Platform',
-    description: 'Master 11 languages with AI-powered spaced repetition flashcards. Free vocabulary trainer with progress tracking.',
+    title: 'VocabBuilder - Complete Vocabulary Learning Platform',
+    description: 'Build and organize vocabulary across 11 languages. Upload custom content, create sections, and practice with multiple study modes.',
   },
   alternates: {
     canonical: 'https://flashcardvocab.org',

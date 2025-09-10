@@ -325,7 +325,7 @@ export default function DashboardPage() {
           <Paper withBorder p="md" radius="md" mb="xl">
             <Group justify="space-between" mb="md">
               <Title order={3}>Your Languages 🌍</Title>
-              <Anchor component={Link} href="/" size="sm">
+              <Anchor component={Link} href="/languages" size="sm">
                 View all languages →
               </Anchor>
             </Group>
@@ -372,7 +372,7 @@ export default function DashboardPage() {
           <Paper withBorder p="md" radius="md" mb="xl">
             <Group justify="space-between" mb="md">
               <Title order={3}>Continue Learning 📖</Title>
-              <Anchor component={Link} href="/" size="sm">
+              <Anchor component={Link} href="/languages" size="sm">
                 Browse all languages →
               </Anchor>
             </Group>

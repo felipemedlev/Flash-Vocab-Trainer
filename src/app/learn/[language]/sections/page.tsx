@@ -154,11 +154,16 @@ export default function LanguageSectionsPage() {
           <Group gap="sm">
             <Button
               component={Link}
-              href={`/learn/${language}/upload`}
-              leftSection={<IconUpload size={16} />}
+              href={`/learn/${language}/create-section`}
+              leftSection={<IconPlus size={16} />}
               variant="light"
+              style={{
+                backgroundColor: 'rgba(17, 153, 142, 0.1)',
+                color: '#11998e',
+                border: '1px solid rgba(17, 153, 142, 0.2)'
+              }}
             >
-              Upload Content
+              Create Section
             </Button>
           </Group>
         </Group>
@@ -461,15 +466,21 @@ export default function LanguageSectionsPage() {
               <Text size="3rem">📚</Text>
               <Title order={3}>No sections available yet</Title>
               <Text c="dimmed" mb="lg">
-                Get started by uploading your own content or wait for official sections to be added.
+                Get started by creating your own vocabulary sections or wait for official sections to be added.
               </Text>
               <Button
                 component={Link}
-                href={`/learn/${language}/upload`}
-                leftSection={<IconUpload size={16} />}
+                href={`/learn/${language}/create-section`}
+                leftSection={<IconPlus size={16} />}
                 size="lg"
+                style={{
+                  background: 'linear-gradient(135deg, #11998e, #38ef7d)',
+                  boxShadow: '0 4px 16px rgba(17, 153, 142, 0.3)',
+                  color: 'white',
+                  border: 'none'
+                }}
               >
-                Upload Your First Section
+                Create Your First Section
               </Button>
             </Stack>
           </Paper>

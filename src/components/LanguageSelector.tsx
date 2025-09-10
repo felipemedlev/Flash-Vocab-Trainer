@@ -204,25 +204,32 @@ export function LanguageSelector({
 
                 {/* Stats for new users */}
                 {(!session || !hasProgress) && (
-                  <Paper withBorder p="xs" bg="gray.0">
-                    <Group justify="space-around">
-                      <Center>
-                        <Stack gap={0} align="center">
-                          <Text size="lg" fw={700} c="blue">
-                            {stats?.totalSections || '5+'}
-                          </Text>
-                          <Text size="xs" c="dimmed">Sections</Text>
-                        </Stack>
-                      </Center>
-                      <Center>
-                        <Stack gap={0} align="center">
-                          <Text size="lg" fw={700} c="green">
-                            {stats?.totalWords || '100+'}
-                          </Text>
-                          <Text size="xs" c="dimmed">Words</Text>
-                        </Stack>
-                      </Center>
-                    </Group>
+                  <Paper withBorder p="xs" bg="blue.0" style={{ border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                    <Stack gap="xs">
+                      <Group justify="center">
+                        <Badge color="blue" variant="light" size="sm">
+                          ✨ Ready to Study
+                        </Badge>
+                      </Group>
+                      <Group justify="space-around">
+                        <Center>
+                          <Stack gap={0} align="center">
+                            <Text size="lg" fw={700} c="blue">
+                              {stats?.totalSections || '5+'}
+                            </Text>
+                            <Text size="xs" c="dimmed">Sections</Text>
+                          </Stack>
+                        </Center>
+                        <Center>
+                          <Stack gap={0} align="center">
+                            <Text size="lg" fw={700} c="green">
+                              {stats?.totalWords || '100+'}
+                            </Text>
+                            <Text size="xs" c="dimmed">Words Ready</Text>
+                          </Stack>
+                        </Center>
+                      </Group>
+                    </Stack>
                   </Paper>
                 )}
 

@@ -33,35 +33,35 @@ export default function Home() {
   const features = [
     {
       icon: IconBrain,
-      title: 'Smart Learning',
-      description: 'AI-powered spaced repetition for optimal retention',
+      title: 'Custom Vocabulary Builder',
+      description: 'Create personalized word collections and upload your own Excel/CSV files',
       color: 'blue'
     },
     {
       icon: IconWorld,
-      title: 'Multi-Language',
-      description: 'Learn 9 languages with native content and cultural context',
+      title: '11 Languages Supported',
+      description: 'Comprehensive vocabulary management for Hebrew, Arabic, Spanish, and 8 more languages',
       color: 'green'
     },
     {
       icon: IconTrophy,
-      title: 'Track Progress',
-      description: 'Monitor your learning journey with detailed analytics',
+      title: 'Multiple Study Modes',
+      description: 'Practice with flashcards, browse word lists, and track mastery progress',
       color: 'yellow'
     },
     {
       icon: IconUsers,
-      title: 'Global Community',
-      description: 'Join millions of learners worldwide in your journey',
+      title: 'Smart Organization',
+      description: 'Organize words by sections, difficulty, and learning status with advanced filtering',
       color: 'grape'
     }
   ];
 
   const stats = [
-    { label: 'Languages Available', value: '9', icon: '🌍' },
-    { label: 'Words Available', value: '1000+', icon: '📚' },
-    { label: 'Active Learners', value: '1M+', icon: '👥' },
-    { label: 'Success Rate', value: '95%', icon: '🎯' }
+    { label: 'Languages Supported', value: '11', icon: '🌍' },
+    { label: 'Study Methods', value: '3+', icon: '📚' },
+    { label: 'Custom Uploads', value: 'Unlimited', icon: '📁' },
+    { label: 'Progress Tracking', value: 'Advanced', icon: '📊' }
   ];
 
   return (
@@ -89,7 +89,7 @@ export default function Home() {
                       letterSpacing: '0.5px'
                     }}
                   >
-                    ✨ AI-Powered Multi-Language Learning
+                    ✨ Complete Vocabulary Learning Platform
                   </Box>
 
                   <Title
@@ -104,7 +104,7 @@ export default function Home() {
                       letterSpacing: '-0.02em'
                     }}
                   >
-                    Master Languages with
+                    Build Your Vocabulary
                     <br />
                     <span style={{
                       background: 'linear-gradient(135deg, #3B82F6, #A855F7, #22C55E)',
@@ -112,7 +112,7 @@ export default function Home() {
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent'
                     }}>
-                      Smart Flashcards
+                      Your Way
                     </span>
                   </Title>
 
@@ -130,9 +130,9 @@ export default function Home() {
                       fontSize: 'clamp(1.1rem, 2.8vw, 1.35rem)'
                     }}
                   >
-                    Transform your language learning journey with our intelligent flashcard system.
-                    Choose from 9 languages, upload custom Excel files, leverage AI-powered spaced repetition,
-                    and track your progress with detailed analytics.
+                    Create custom vocabulary collections, organize words by sections, practice with multiple study modes, 
+                    and track your learning progress. Upload your own Excel/CSV files or browse pre-loaded content 
+                    across 11 languages with intelligent spaced repetition.
                   </Text>
                 </Box>
 
@@ -152,7 +152,7 @@ export default function Home() {
                       height: '60px'
                     }}
                   >
-                    Choose Your Language
+                    Start Building Vocabulary
                   </Button>
 
                   {session && (
@@ -177,11 +177,11 @@ export default function Home() {
         <Stack gap="xl">
           <Box style={{ textAlign: 'center' }}>
             <Title order={2} size={rem(42)} mb="md">
-              Why Our Platform Works 🚀
+              Complete Vocabulary Management 🚀
             </Title>
             <Text size="xl" c="dimmed" style={{ maxWidth: '700px', margin: '0 auto', lineHeight: 1.6 }}>
-              Our platform combines the best of traditional learning with cutting-edge AI technology
-              to deliver proven results for millions of learners worldwide.
+              More than just flashcards - create, organize, study, and track your vocabulary 
+              learning with powerful tools designed for serious language learners.
             </Text>
           </Box>
 
@@ -272,11 +272,11 @@ export default function Home() {
         >
           <Stack gap="lg">
             <Title order={2} size={rem(36)}>
-              Ready to Master Any Language? 🎯
+              Ready to Build Your Vocabulary? 🎯
             </Title>
             <Text size="lg" c="dimmed" style={{ maxWidth: '500px', margin: '0 auto' }}>
-              Join millions of learners who have already improved their vocabulary across 9 languages
-              with our proven AI-powered flashcard system.
+              Start organizing and learning vocabulary your way. Upload your own content, 
+              create custom sections, and practice with multiple study methods across 11 languages.
             </Text>
             <Group justify="center" gap="md">
               {session ? (
@@ -291,7 +291,7 @@ export default function Home() {
                     boxShadow: '0 4px 16px rgba(17, 153, 142, 0.3)'
                   }}
                 >
-                  Choose Language
+                  Start Learning
                 </Button>
               ) : (
                 <>

@@ -143,10 +143,10 @@ export function AppShellWrapper({ children }: { children: React.ReactNode }) {
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent'
                 }}>
-                  FlashcardVocab
+                  VocabBuilder
                 </Text>
                 <Text size="xs" c="dimmed" style={{ marginTop: '-2px' }}>
-                  Smart Language Learning
+                  Complete Vocabulary Platform
                 </Text>
               </div>
             </Group>
@@ -246,10 +246,10 @@ export function AppShellWrapper({ children }: { children: React.ReactNode }) {
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent'
                 }}>
-                  FlashcardVocab
+                  VocabBuilder
                 </Text>
                 <Text size="xs" c="dimmed" style={{ marginTop: '-2px' }}>
-                  Smart Language Learning
+                  Complete Vocabulary Platform
                 </Text>
               </div>
             </Group>
