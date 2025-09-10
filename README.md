@@ -1,25 +1,25 @@
-# 🌍 Multilingual Vocabulary Trainer
+# 🌍 VocabBuilder - Complete Vocabulary Learning Platform
 
 ## Project Overview
 
-A sophisticated **multilingual flashcard learning platform** designed for efficient vocabulary acquisition across multiple languages. This application integrates robust user authentication, dynamic content management, intelligent spaced repetition algorithms, and comprehensive progress tracking. Built with modern technologies including Next.js 15+, TypeScript, PostgreSQL, and Prisma, this platform demonstrates expertise in full-stack development, scalable architecture, and exceptional user experience design.
+A comprehensive **vocabulary learning and management platform** that goes beyond simple flashcards. VocabBuilder empowers users to build, organize, and study vocabulary across 11 languages with multiple study modes, intelligent spaced repetition, and powerful content creation tools. Built with cutting-edge technologies including Next.js 15+, TypeScript, PostgreSQL, and Prisma, this platform represents the future of personalized language learning.
 
-**Specifically designed for the diverse linguistic landscape of Tel Aviv**, supporting Hebrew, Arabic, English, Spanish, French, German, Italian, Russian, Chinese, Portuguese, and Japanese with full RTL language support.
+**Supporting a truly global audience** with Hebrew, Arabic, Spanish, French, German, Italian, Russian, Chinese, Portuguese, Japanese, and English - complete with native RTL language support and language-specific optimizations.
 
 ## 🚀 Live Demo
 
 Experience the platform firsthand:
-[https://flash-vocab-trainer.vercel.app/](https://flash-vocab-trainer.vercel.app/)
+[https://vocabbuilder.app/](https://vocabbuilder.app/)
 
-Test the multilingual interface, explore the intelligent learning algorithms, and experience the comprehensive progress tracking system.
+Create custom vocabulary sections, upload Excel files, practice with multiple study modes, and track your learning progress across multiple languages.
 
 ## ✨ Key Features
 
-### 🎯 **Core Multilingual Functionality**
-- **🌐 Multi-Language Support**: Full support for 11 languages including Hebrew, Arabic, Spanish, French, German, Italian, Russian, Chinese, Portuguese, and Japanese
-- **📝 RTL Language Support**: Native right-to-left text rendering for Hebrew and Arabic
-- **🎨 Language-Specific Fonts**: Optimized typography for each supported language
-- **🔄 Dynamic Language Switching**: Seamless switching between languages during study sessions
+### 🎯 **Complete Vocabulary Management System**
+- **🌐 11 Language Support**: Hebrew, Arabic, Spanish, French, German, Italian, Russian, Chinese, Portuguese, Japanese, and English
+- **📝 RTL Language Support**: Native right-to-left text rendering with proper typography
+- **🎨 Language-Optimized Fonts**: Custom fonts and rendering for each script (Cyrillic, CJK, Arabic, etc.)
+- **🔄 Flexible Study Modes**: Flashcards, word lists, practice modes, and progress tracking
 
 ### 🛡️ **Advanced User Management**
 - **🔐 Secure Authentication**: NextAuth.js implementation with multiple authentication providers
@@ -33,18 +33,19 @@ Test the multilingual interface, explore the intelligent learning algorithms, an
 - **🔄 Smart Review Scheduling**: Intelligent scheduling of word reviews based on forgetting curves
 - **🎯 Performance Analytics**: Detailed accuracy tracking, response time analysis, and learning curve visualization
 
-### 📚 **Dynamic Content Management**
-- **📁 Custom Section Creation**: Users can create vocabulary sections for any supported language
-- **📊 Excel/CSV Upload**: Support for .xlsx, .xls, and .csv file uploads with intelligent parsing
-- **✅ Advanced Validation**: File format validation, duplicate detection, and data integrity checks
-- **🏷️ Smart Categorization**: Automatic categorization of words by difficulty and learning status
+### 📚 **Powerful Content Creation Tools**
+- **📁 Multiple Input Methods**: Manual entry, Excel/CSV upload, or copy-paste from spreadsheets
+- **📊 File Upload Support**: .xlsx, .xls, and .csv files with intelligent parsing and validation
+- **✅ Smart Data Processing**: Automatic duplicate removal, format validation, and error handling
+- **🏷️ Organized Sections**: Create themed vocabulary collections with descriptions and difficulty levels
+- **🔄 Demo Content**: Pre-loaded vocabulary sections (100+ words per language) to start learning immediately
 
-### 🎮 **Engaging Study Experience**
-- **⚡ Interactive Flashcards**: Modern, responsive flashcard interface with smooth animations
-- **⌨️ Keyboard Shortcuts**: Full keyboard navigation support (1-4, Q-W-E-R keys for quick selection)
-- **📱 Mobile-Optimized**: Fully responsive design optimized for mobile learning
-- **🎨 Visual Feedback**: Immediate color-coded feedback with encouraging messages
-- **⏱️ Session Customization**: Flexible session lengths (10, 20, 50, or custom word counts)
+### 🎮 **Multiple Study Modes**
+- **⚡ Interactive Flashcards**: Modern, responsive flashcard interface with smooth animations and SM-2 algorithm
+- **📋 Word List Practice**: Browse and study vocabulary in organized lists with filtering and search
+- **⌨️ Keyboard Shortcuts**: Full keyboard navigation support for efficient studying
+- **📱 Mobile-Optimized**: Fully responsive design optimized for mobile and tablet learning
+- **⏱️ Flexible Sessions**: Customizable session lengths (10, 20, 50 words) or study entire sections
 
 ### 📊 **Comprehensive Analytics & Progress Tracking**
 - **📈 Multi-Language Dashboard**: Overview of progress across all studied languages
@@ -53,11 +54,12 @@ Test the multilingual interface, explore the intelligent learning algorithms, an
 - **🎯 Performance Insights**: Learning velocity, retention rates, and improvement trends
 - **📋 Words Progress Section**: New comprehensive view of learned words and words needing practice with advanced filtering
 
-### 🔍 **Advanced Features**
-- **🔍 Smart Search & Filtering**: Search words by original text or translation across languages
-- **📱 Progressive Web App**: Installable PWA for native app-like experience
-- **🌙 Performance Optimized**: Efficient API endpoints with timeout handling and error recovery
-- **🔄 Real-time Updates**: Live progress updates and session statistics
+### 🔍 **Professional Features**
+- **🔍 Advanced Search**: Search and filter words by original text, translation, or difficulty across all languages
+- **📱 Progressive Web App**: Installable PWA for native app-like experience on mobile devices
+- **🚀 Performance Optimized**: Lightning-fast API endpoints with intelligent caching and error recovery
+- **🔄 Real-time Sync**: Live progress updates, session statistics, and cross-device synchronization
+- **💾 Data Export**: Export your vocabulary and progress data for backup or analysis
 
 ## 🛠️ Technology Stack
 
@@ -94,17 +96,17 @@ src/
 ├── app/
 │   ├── api/                 # Backend API routes
 │   │   ├── auth/           # Authentication endpoints
-│   │   ├── sections/       # Section management
-│   │   ├── words/          # Word management
-│   │   ├── progress/       # Learning progress tracking
-│   │   ├── sessions/       # Study session management
-│   │   ├── user-words-simple/ # Optimized word progress API
-│   │   └── upload/         # File upload handling
-│   ├── dashboard/          # User dashboard with analytics
-│   ├── profile/            # User profile with words progress
-│   ├── study/              # Study interface and flashcards
-│   ├── learn/              # Language and section selection
-│   ├── languages/          # Multi-language support pages
+│   │   ├── sections/       # Vocabulary section management
+│   │   ├── words/          # Word and vocabulary operations
+│   │   ├── progress/       # Learning progress and analytics
+│   │   ├── sessions/       # Study session tracking
+│   │   ├── user-words-simple/ # Optimized progress API
+│   │   └── upload/         # File upload and processing
+│   ├── dashboard/          # Multi-language progress dashboard
+│   ├── profile/            # User profile and word progress
+│   ├── study/              # Flashcard study interface
+│   ├── learn/              # Language selection and content creation
+│   ├── languages/          # Language selector with demo content
 │   └── auth/               # Authentication pages
 ├── components/             # Reusable React components
 │   ├── ui/                # UI components (FlashCard, LinearProgress)
@@ -132,8 +134,8 @@ src/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/Flash-Vocab-Trainer.git
-   cd Flash-Vocab-Trainer
+   git clone https://github.com/your-username/vocabbuilder.git
+   cd vocabbuilder
    ```
 
 2. **Install dependencies:**
@@ -145,7 +147,7 @@ src/
    Create a `.env` file in the root directory:
    ```env
    # Database
-   DATABASE_URL="postgresql://username:password@localhost:5432/vocab_trainer"
+   DATABASE_URL="postgresql://username:password@localhost:5432/vocabbuilder"
    
    # Authentication
    NEXTAUTH_SECRET="your-nextauth-secret-here"
@@ -204,55 +206,58 @@ pnpm prisma:studio # Open Prisma Studio
 ## 📱 Usage Guide
 
 ### **Getting Started**
-1. **Create Account**: Register with email or OAuth provider
-2. **Choose Language**: Select from 11 supported languages
-3. **Browse Sections**: Explore pre-loaded vocabulary or create custom sections
-4. **Start Learning**: Begin flashcard sessions with customizable settings
-5. **Track Progress**: Monitor your learning journey on the dashboard
+1. **Create Account**: Register with email or use the demo account
+2. **Choose Language**: Select from 11 supported languages with 100+ words ready to study
+3. **Immediate Learning**: Start with pre-loaded vocabulary sections like "Essential Greetings" and "100 Most Used Words"
+4. **Create Custom Content**: Build your own vocabulary sections with manual entry or Excel/CSV upload
+5. **Track Progress**: Monitor learning across multiple languages on the comprehensive dashboard
 
 ### **Key Workflows**
 
-**📚 Creating Custom Vocabulary:**
-- Navigate to language selection → "Create New Section"
-- Upload Excel/CSV files with proper column structure
-- System validates and imports your vocabulary
+**📚 Building Custom Vocabulary:**
+- Go to Language Sections → "Create Section"
+- Choose between manual entry or file upload tabs
+- Copy-paste directly from Excel or upload .xlsx/.csv files
+- System automatically processes and validates your vocabulary
 
-**🎯 Studying Efficiently:**
-- Select section and session length
-- Use keyboard shortcuts for faster interaction
-- Review progress and difficult words in profile
+**🎯 Multiple Study Methods:**
+- **Flashcards**: Spaced repetition with SM-2 algorithm
+- **Word Lists**: Browse and practice vocabulary with filters
+- **Progress Review**: Focus on difficult words or review mastered ones
 
-**📊 Monitoring Progress:**
-- Visit dashboard for overview statistics
-- Check profile → "Words Progress" for detailed analysis
-- Filter by learned/difficult words across languages
+**📊 Comprehensive Progress Tracking:**
+- **Dashboard**: Overview of all languages and daily goals
+- **Word Progress**: Detailed per-word analytics and difficulty tracking
+- **Cross-Language**: Compare progress and learning velocity across languages
 
-## 🌟 Key Achievements
+## 🌟 Technical Achievements
 
-- **🏗️ Full-Stack Architecture**: End-to-end ownership from database design to user interface
-- **🧠 Advanced Algorithm Implementation**: Custom SM-2 spaced repetition system with performance optimizations
-- **🌍 Multilingual Support**: Comprehensive internationalization with RTL language support
-- **📊 Complex Data Management**: Efficient handling of user progress across multiple languages
-- **🚀 Performance Optimization**: Optimized API endpoints with intelligent caching and error handling
-- **🎨 Modern UI/UX**: Responsive design with accessibility considerations
-- **📱 Mobile-First Approach**: Optimized experience across all device sizes
+- **🏗️ Complete Vocabulary Platform**: Beyond flashcards - comprehensive vocabulary building, organization, and learning system
+- **🧠 Intelligent Learning System**: Custom SM-2 spaced repetition with adaptive difficulty and performance optimization
+- **🌍 True Multilingual Support**: 11 languages with native RTL support, language-specific fonts, and cultural context
+- **📊 Sophisticated Content Management**: Multiple input methods (manual, upload, copy-paste) with intelligent processing
+- **🚀 Performance Excellence**: Optimized APIs, real-time updates, and mobile-first responsive design
+- **🎨 Professional UX**: Intuitive interface that scales from beginner to power user workflows
+- **📱 Cross-Platform Compatibility**: PWA with native app experience across desktop and mobile
 
-## 🎯 Target Market
+## 🎯 Target Audience
 
-**Designed specifically for the Tel Aviv tech ecosystem**, serving:
-- **Language learners** in Israel's multilingual environment
-- **Tech professionals** needing efficient vocabulary acquisition
-- **Educational institutions** requiring scalable learning platforms
-- **International workers** adapting to local languages
+**Built for serious language learners worldwide**, serving:
+- **Professionals** building vocabulary for career advancement
+- **Students** organizing and memorizing academic vocabulary
+- **Language enthusiasts** studying multiple languages simultaneously  
+- **Educational institutions** needing scalable vocabulary management
+- **Content creators** building custom learning materials for their communities
 
 ## 🔮 Future Roadmap
 
-- **🎮 Gamification**: Achievement systems, leaderboards, and learning challenges
-- **🤖 AI Integration**: Personalized learning recommendations and content generation
-- **🔊 Audio Support**: Pronunciation features and listening exercises
-- **👥 Social Features**: Study groups and collaborative learning
-- **📊 Advanced Analytics**: Machine learning insights and learning pattern analysis
-- **🌐 Extended Language Support**: Addition of more languages based on user demand
+- **🤖 AI-Powered Features**: Intelligent vocabulary suggestions, automated content generation, and personalized learning paths
+- **🔊 Audio Integration**: Native pronunciation support, listening exercises, and speech recognition
+- **👥 Collaborative Learning**: Study groups, shared vocabulary collections, and community-generated content
+- **🎮 Advanced Gamification**: Achievement systems, streaks, leaderboards, and vocabulary challenges
+- **📊 ML Analytics**: Pattern recognition for learning optimization and predictive difficulty assessment
+- **🌐 Extended Language Support**: Additional languages and dialect variations based on community demand
+- **🔄 Advanced Import/Export**: Support for Anki decks, Quizlet sets, and other popular vocabulary formats
 
 ## 🤝 Contributing
 
@@ -264,5 +269,6 @@ This project is open-source and available under the [MIT License](LICENSE).
 
 ---
 
-**Built with ❤️ for the global learning community**
-*Showcasing modern full-stack development skills for Tel Aviv's innovative tech scene*
+**Built with ❤️ for serious language learners everywhere**
+
+*VocabBuilder represents the evolution from simple flashcard tools to comprehensive vocabulary management platforms - empowering users to truly build their vocabulary their way.*
